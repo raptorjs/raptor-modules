@@ -1,0 +1,29 @@
+{
+  "name": "raptor-modules",
+  "version": "0.1.0-SNAPSHOT",
+  "description": "Provides support for the CommonJS module system and other module systems",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/raptorjs/raptor-modules.git"
+  },
+  "scripts": {
+    "test": "node_modules/.bin/mocha --ui bdd --reporter spec  ./test"
+  },
+  "author": "Patrick Steele-Idem <psteeleidem@ebay.com>",
+  "maintainers": "Patrick Steele-Idem <psteeleidem@ebay.com>",
+  "dependencies": {
+    "app-module-path": "~0.1.0",
+    "raptor-packaging": "~0.1.0-SNAPSHOT",
+    "raptor-detect": "~0.1.0-SNAPSHOT"
+  },
+  "devDependencies": {
+    "mocha": "~1.15.1",
+    "chai": "~1.8.1"
+  },
+  "license": "Apache License v2.0",
+  "bin": {},
+  "main": "lib/index.js",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  }
+}
