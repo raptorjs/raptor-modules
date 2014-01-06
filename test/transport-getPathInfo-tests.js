@@ -8,7 +8,7 @@ var expect = require('chai').expect;
 
 require('../transport'); // Load this module just to make sure it works
 
-describe('raptor-modules/transport' , function() {
+describe('raptor-modules/transport.getPathInfo' , function() {
 
     beforeEach(function(done) {
         for (var k in require.cache) {
