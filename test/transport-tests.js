@@ -19,7 +19,7 @@ describe('raptor-modules/transport' , function() {
         done();
     });
 
-    it.only('should resolve path info correctly', function() {
+    it('should resolve path info correctly for top-level installed modules', function() {
         var transport = require('../transport');
         var path = nodePath.join(__dirname, "test-project/node_modules/foo/lib/index.js");
         var pathInfo = transport.getPathInfo(path);
@@ -34,7 +34,23 @@ describe('raptor-modules/transport' , function() {
                 childVersion: '1.0.0'
             }
         });
+    });
 
+    it('should resolve path info correctly for second-level installed modules', function() {
+        var transport = require('../transport');
+        var path = nodePath.join(__dirname, "test-project/node_modules/foo/node_modules/baz/lib/index.js");
+        var pathInfo = transport.getPathInfo(path);
+        expect(pathInfo).to.deep.equal({
+            logicalPath: '/node_modules/foo/node_modules/baz/lib/index.js',
+            realPath: '/baz@3.0.0/lib/index.js',
+            filePath: path,
+            isDir: false,
+            dep: {
+                parentPath: '/node_modules/foo',
+                childId: 'baz',
+                childVersion: '3.0.0'
+            }
+        });
     });
 
 
