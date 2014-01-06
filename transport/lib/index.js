@@ -2,6 +2,7 @@ var nodePath = require('path');
 var fs = require('fs');
 
 var getProjectRootDir = require('./util').getProjectRootDir;
+var findMain = require('./util').findMain;
 
 function defineCode(path, streamOrString, isObject) {
 
@@ -26,6 +27,7 @@ function getPathInfo(path) {
     var realPath;
     var moduleRootDir;
     var dep;
+    var packagePath;
 
     var stat = fs.statSync(path);
 
@@ -37,7 +39,7 @@ function getPathInfo(path) {
             moduleNameEnd = path.length;
         }
         moduleRootDir = path.substring(0, moduleNameEnd);
-        var packagePath = nodePath.join(path.substring(0, moduleNameEnd), 'package.json');
+        packagePath = nodePath.join(path.substring(0, moduleNameEnd), 'package.json');
         var pkg = require(packagePath);
         var name = pkg.name;
         var version = pkg.version;
@@ -55,13 +57,26 @@ function getPathInfo(path) {
         realPath = logicalPath;
     }
 
+    var isDir = stat.isDirectory();
+    var main;
+    if (isDir) {
+        main = findMain(path);
+    }
+
     var result = {
         filePath: path,
         logicalPath: logicalPath,
         realPath: realPath,
-        dep: dep,
-        isDir: stat.isDirectory()
+        isDir: isDir
     };
+
+    if (dep) {
+        result.dep = dep;
+    }
+
+    if (main) {
+        result.main = main;
+    }
 
     return result;
 }

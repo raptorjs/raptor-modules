@@ -13,7 +13,6 @@
   "maintainers": "Patrick Steele-Idem <psteeleidem@ebay.com>",
   "dependencies": {
     "app-module-path": "~0.1.0",
-    "raptor-packaging": "~0.1.0-SNAPSHOT",
     "raptor-detect": "~0.1.0-SNAPSHOT",
     "raptor-ecma": "~0.1.0-SNAPSHOT"
   },
