@@ -14,7 +14,8 @@
   "dependencies": {
     "app-module-path": "~0.1.0",
     "raptor-detect": "~0.1.0-SNAPSHOT",
-    "raptor-ecma": "~0.1.0-SNAPSHOT"
+    "raptor-ecma": "~0.1.0-SNAPSHOT",
+    "resumer": "0.0.0"
   },
   "devDependencies": {
     "mocha": "~1.15.1",

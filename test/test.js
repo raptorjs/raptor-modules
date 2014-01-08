@@ -1,1 +1,1 @@
-exports.test = true;
+exports.test=true;
