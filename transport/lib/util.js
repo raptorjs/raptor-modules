@@ -96,7 +96,13 @@ function findRootDir(dirname) {
 
     var packagePath = nodePath.join(dirname, 'package.json');
     if (dirname.indexOf('node_modules') === -1 && existsCached(packagePath)) {
-        return dirname;
+        var pkg = require(packagePath);
+        if (pkg.name) {
+            // Only consider packages that have a name to avoid
+            // intermediate packages that might only be used to
+            // define a main script
+            return dirname;    
+        }
     }
 
     var parentDirname = nodePath.dirname(dirname);
