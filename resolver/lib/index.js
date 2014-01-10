@@ -1,0 +1,1 @@
+exports.find = require('./search-path').find;
