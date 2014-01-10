@@ -1,0 +1,49 @@
+'use strict';
+require('../'); // Load the module
+var nodePath = require('path');
+var chai = require('chai');
+chai.Assertion.includeStack = true;
+require('chai').should();
+var expect = require('chai').expect;
+var fs = require('fs');
+
+require('../transport'); // Load this module just to make sure it works
+
+describe('raptor-modules/transport.registerDependencyCode' , function() {
+
+    beforeEach(function(done) {
+        for (var k in require.cache) {
+            if (require.cache.hasOwnProperty(k)) {
+                delete require.cache[k];
+            }
+        }
+        done();
+    });
+
+    it('should generate correct dependency code for top-level dependency', function(done) {
+        var transport = require('../transport');
+        var out = transport.registerDependencyCode('', 'foo', '1.0.0');
+        var code = '';
+        out.on('data', function(data) {
+            code += data;
+        });
+        out.on('end', function() {
+            expect(code).to.equal('$rmod.dep("", "foo", "1.0.0");');
+            done();
+        });
+    });
+
+    it('should generate correct dependency code for nested dependency', function(done) {
+        var transport = require('../transport');
+        var out = transport.registerDependencyCode('/node_modules/foo', 'baz', '3.0.0');
+        var code = '';
+        out.on('data', function(data) {
+            code += data;
+        });
+        out.on('end', function() {
+            expect(code).to.equal('$rmod.dep("/node_modules/foo", "baz", "3.0.0");');
+            done();
+        });
+    });
+});
+
