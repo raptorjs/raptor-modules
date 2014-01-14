@@ -7,7 +7,7 @@ require('chai').should();
 var expect = require('chai').expect;
 var fs = require('fs');
 
-require('../transport'); // Load this module just to make sure it works
+require('../'); // Load this module just to make sure it works
 
 describe('raptor-modules/transport.registerMainCode' , function() {
 
@@ -21,7 +21,7 @@ describe('raptor-modules/transport.registerMainCode' , function() {
     });
 
     it('should generate correct code', function(done) {
-        var transport = require('../transport');
+        var transport = require('../');
         var out = transport.registerMainCode('/foo@1.0.0', 'lib/index');
         var code = '';
         out.on('data', function(data) {

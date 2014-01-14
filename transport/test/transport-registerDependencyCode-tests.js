@@ -7,7 +7,7 @@ require('chai').should();
 var expect = require('chai').expect;
 var fs = require('fs');
 
-require('../transport'); // Load this module just to make sure it works
+require('../'); // Load this module just to make sure it works
 
 describe('raptor-modules/transport.registerDependencyCode' , function() {
 
@@ -21,7 +21,7 @@ describe('raptor-modules/transport.registerDependencyCode' , function() {
     });
 
     it('should generate correct dependency code for top-level dependency', function(done) {
-        var transport = require('../transport');
+        var transport = require('../');
         var out = transport.registerDependencyCode('', 'foo', '1.0.0');
         var code = '';
         out.on('data', function(data) {
@@ -34,7 +34,7 @@ describe('raptor-modules/transport.registerDependencyCode' , function() {
     });
 
     it('should generate correct dependency code for nested dependency', function(done) {
-        var transport = require('../transport');
+        var transport = require('../');
         var out = transport.registerDependencyCode('/node_modules/foo', 'baz', '3.0.0');
         var code = '';
         out.on('data', function(data) {
