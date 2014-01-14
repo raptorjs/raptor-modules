@@ -6,7 +6,7 @@ chai.Assertion.includeStack = true;
 require('chai').should();
 var expect = require('chai').expect;
 
-require('../transport'); // Load this module just to make sure it works
+require('../'); // Load this module just to make sure it works
 
 describe('raptor-modules/transport.getPathInfo' , function() {
 
@@ -20,7 +20,7 @@ describe('raptor-modules/transport.getPathInfo' , function() {
     });
 
     it('should resolve path info correctly for top-level installed modules', function() {
-        var transport = require('../transport');
+        var transport = require('../');
         var path = nodePath.join(__dirname, "test-project/node_modules/foo/lib/index.js");
         var pathInfo = transport.getPathInfo(path);
         expect(pathInfo).to.deep.equal({
@@ -37,7 +37,7 @@ describe('raptor-modules/transport.getPathInfo' , function() {
     });
 
     it('should resolve path info correctly for directories', function() {
-        var transport = require('../transport');
+        var transport = require('../');
         var path;
         var pathInfo;
 
@@ -83,7 +83,7 @@ describe('raptor-modules/transport.getPathInfo' , function() {
     });
 
     it('should resolve path info correctly for second-level installed modules', function() {
-        var transport = require('../transport');
+        var transport = require('../');
         var path = nodePath.join(__dirname, "test-project/node_modules/foo/node_modules/baz/lib/index.js");
         var pathInfo = transport.getPathInfo(path);
         expect(pathInfo).to.deep.equal({
@@ -100,7 +100,7 @@ describe('raptor-modules/transport.getPathInfo' , function() {
     });
 
     it('should resolve path info correctly for application modules', function() {
-        var transport = require('../transport');
+        var transport = require('../');
         var path = nodePath.join(__dirname, "test-project/src/hello-world/index.js");
         var pathInfo = transport.getPathInfo(path);
         expect(pathInfo).to.deep.equal({

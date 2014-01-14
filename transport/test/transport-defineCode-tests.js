@@ -7,7 +7,7 @@ require('chai').should();
 var expect = require('chai').expect;
 var fs = require('fs');
 
-require('../transport'); // Load this module just to make sure it works
+require('../'); // Load this module just to make sure it works
 
 describe('raptor-modules/transport.defineCode' , function() {
 
@@ -21,7 +21,7 @@ describe('raptor-modules/transport.defineCode' , function() {
     });
 
     it('should handle String argument for factory function code', function(done) {
-        var transport = require('../transport');
+        var transport = require('../');
         var out = transport.defineCode('/some/path', 'exports.test=true;');
         var code = '';
         out.on('data', function(data) {
@@ -34,7 +34,7 @@ describe('raptor-modules/transport.defineCode' , function() {
     });
 
     it('should handle String argument for object code', function(done) {
-        var transport = require('../transport');
+        var transport = require('../');
         var out = transport.defineCode('/some/path', '{ "hello": "world" }', {object: true});
         var code = '';
         out.on('data', function(data) {
@@ -47,7 +47,7 @@ describe('raptor-modules/transport.defineCode' , function() {
     });
 
     it('should handle Stream argument for factory function code', function(done) {
-        var transport = require('../transport');
+        var transport = require('../');
         var stream = fs.createReadStream(nodePath.join(__dirname, 'test.js'), {encoding: 'utf8'});
         var out = transport.defineCode('/some/path', stream);
         var code = '';
@@ -61,7 +61,7 @@ describe('raptor-modules/transport.defineCode' , function() {
     });
 
     it('should handle Stream argument for object code', function(done) {
-        var transport = require('../transport');
+        var transport = require('../');
         var stream = fs.createReadStream(nodePath.join(__dirname, 'test.json'), {encoding: 'utf8'});
         var out = transport.defineCode('/some/path', stream, {object: true});
         var code = '';
