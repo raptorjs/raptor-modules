@@ -1,13 +1,36 @@
 var nodePath = require('path');
 var fs = require('fs');
-
 var getProjectRootDir = require('./util').getProjectRootDir;
 var findMain = require('./util').findMain;
 
+function normalizeDepDirnames(path) {
+    var parts = path.split('/');
+    for (var i=0, len=parts.length; i<len; i++) {
+        if (parts[i] === 'node_modules') {
+            parts[i] = '$';
+        }
+    }
+
+    return parts.join('/');
+}
+
+function removeRegisteredExt(path) {
+    var basename = nodePath.basename(path);
+    var ext = nodePath.extname(basename);
+
+    if (require.extensions[ext]) {
+        return path.slice(0, 0-ext.length);
+    } else {
+        return path;
+    }
+}
+
 function getPathInfo(path) {
     var root = getProjectRootDir(path);
+    path = path.replace(/[\\]/g, '/');
+
     var lastNodeModules = path.lastIndexOf('node_modules/');
-    var logicalPath = path.substring(root.length);
+    var logicalPath = normalizeDepDirnames(path.substring(root.length));
     var realPath;
     var moduleRootDir;
     var dep;
@@ -29,22 +52,30 @@ function getPathInfo(path) {
         var version = pkg.version;
         
         var basePath = '/' + name + '@' + version;
-        realPath = basePath + path.substring(moduleNameEnd);
+        realPath = normalizeDepDirnames(basePath + path.substring(moduleNameEnd));
 
         dep = {
-            parentPath: nodePath.dirname(nodeModulesDir).substring(root.length),
-            childId: name,
+            parentPath: normalizeDepDirnames(nodePath.dirname(nodeModulesDir).substring(root.length)),
+            childName: name,
             childVersion: version
         };
-    }
-    else {
+    } else {
         realPath = logicalPath;
     }
 
     var isDir = stat.isDirectory();
     var main;
+
     if (isDir) {
-        main = findMain(path);
+        var mainFilePath = findMain(path);
+        var mainRelPath = removeRegisteredExt(nodePath.relative(path, mainFilePath));
+        main = {
+            filePath: mainFilePath,
+            path: mainRelPath
+        };
+    } else {
+        logicalPath = removeRegisteredExt(logicalPath);
+        realPath = removeRegisteredExt(realPath);
     }
 
     var result = {

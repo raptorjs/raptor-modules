@@ -25,14 +25,17 @@ describe('raptor-modules/transport.resolveRequire' , function() {
         var from = nodePath.join(__dirname, 'test-project');
         var pathInfo = transport.resolveRequire('foo', from);
         expect(pathInfo).to.deep.equal({
-            logicalPath: '/node_modules/foo',
+            logicalPath: '/$/foo',
             realPath: '/foo@1.0.0',
-            main: nodePath.join(__dirname, 'test-project/node_modules/foo/lib/index.js'),
+            main: {
+                filePath: nodePath.join(__dirname, 'test-project/node_modules/foo/lib/index.js'),
+                path: 'lib/index'
+            },
             filePath: nodePath.join(__dirname, 'test-project/node_modules/foo'),
             isDir: true,
             dep: {
                 parentPath: '',
-                childId: 'foo',
+                childName: 'foo',
                 childVersion: '1.0.0'
             }
         });
@@ -44,14 +47,31 @@ describe('raptor-modules/transport.resolveRequire' , function() {
         var from = nodePath.join(__dirname, 'test-project');
         var pathInfo = transport.resolveRequire('foo/lib/index', from);
         expect(pathInfo).to.deep.equal({
-            logicalPath: '/node_modules/foo/lib/index.js',
-            realPath: '/foo@1.0.0/lib/index.js',
+            logicalPath: '/$/foo/lib/index',
+            realPath: '/foo@1.0.0/lib/index',
             filePath: nodePath.join(__dirname, 'test-project/node_modules/foo/lib/index.js'),
             isDir: false,
             dep: {
                 parentPath: '',
-                childId: 'foo',
+                childName: 'foo',
                 childVersion: '1.0.0'
+            }
+        });
+    });
+
+    it('should resolve require correctly for relative paths', function() {
+        require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));
+        var transport = require('../');
+        var from = nodePath.join(__dirname, 'test-project/src');
+        var pathInfo = transport.resolveRequire('./hello-world', from);
+        expect(pathInfo).to.deep.equal({
+            logicalPath: '/src/hello-world',
+            realPath: '/src/hello-world',
+            filePath: nodePath.join(__dirname, 'test-project/src/hello-world'),
+            isDir: true,
+            main: {
+                filePath: nodePath.join(__dirname, 'test-project/src/hello-world/index.js'),
+                path: 'index'
             }
         });
     });

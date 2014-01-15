@@ -24,13 +24,13 @@ describe('raptor-modules/transport.getPathInfo' , function() {
         var path = nodePath.join(__dirname, "test-project/node_modules/foo/lib/index.js");
         var pathInfo = transport.getPathInfo(path);
         expect(pathInfo).to.deep.equal({
-            logicalPath: '/node_modules/foo/lib/index.js',
-            realPath: '/foo@1.0.0/lib/index.js',
+            logicalPath: '/$/foo/lib/index',
+            realPath: '/foo@1.0.0/lib/index',
             filePath: path,
             isDir: false,
             dep: {
                 parentPath: '',
-                childId: 'foo',
+                childName: 'foo',
                 childVersion: '1.0.0'
             }
         });
@@ -44,31 +44,37 @@ describe('raptor-modules/transport.getPathInfo' , function() {
         path = nodePath.join(__dirname, "test-project/node_modules/foo");
         pathInfo = transport.getPathInfo(path);
         expect(pathInfo).to.deep.equal({
-            logicalPath: '/node_modules/foo',
+            logicalPath: '/$/foo',
             realPath: '/foo@1.0.0',
             filePath: path,
             isDir: true,
             dep: {
                 parentPath: '',
-                childId: 'foo',
+                childName: 'foo',
                 childVersion: '1.0.0'
             },
-            main: nodePath.join(__dirname, "test-project/node_modules/foo/lib/index.js")
+            main: {
+                filePath: nodePath.join(__dirname, "test-project/node_modules/foo/lib/index.js"),
+                path: 'lib/index'
+            }
         });
 
         path = nodePath.join(__dirname, "test-project/node_modules/bar");
         pathInfo = transport.getPathInfo(path);
         expect(pathInfo).to.deep.equal({
-            logicalPath: '/node_modules/bar',
+            logicalPath: '/$/bar',
             realPath: '/bar@2.0.0',
             filePath: path,
             isDir: true,
             dep: {
                 parentPath: '',
-                childId: 'bar',
+                childName: 'bar',
                 childVersion: '2.0.0'
             },
-            main: nodePath.join(__dirname, "test-project/node_modules/bar/lib/index.js")
+            main: {
+                filePath: nodePath.join(__dirname, "test-project/node_modules/bar/lib/index.js"),
+                path: 'lib/index'
+            }
         });
 
         path = nodePath.join(__dirname, "test-project/src/hello-world");
@@ -78,7 +84,10 @@ describe('raptor-modules/transport.getPathInfo' , function() {
             realPath: '/src/hello-world',
             filePath: path,
             isDir: true,
-            main: nodePath.join(__dirname, "test-project/src/hello-world/index.js")
+            main: {
+                filePath: nodePath.join(__dirname, "test-project/src/hello-world/index.js"),
+                path: 'index'
+            }
         });
     });
 
@@ -87,13 +96,13 @@ describe('raptor-modules/transport.getPathInfo' , function() {
         var path = nodePath.join(__dirname, "test-project/node_modules/foo/node_modules/baz/lib/index.js");
         var pathInfo = transport.getPathInfo(path);
         expect(pathInfo).to.deep.equal({
-            logicalPath: '/node_modules/foo/node_modules/baz/lib/index.js',
-            realPath: '/baz@3.0.0/lib/index.js',
+            logicalPath: '/$/foo/$/baz/lib/index',
+            realPath: '/baz@3.0.0/lib/index',
             filePath: path,
             isDir: false,
             dep: {
-                parentPath: '/node_modules/foo',
-                childId: 'baz',
+                parentPath: '/$/foo',
+                childName: 'baz',
                 childVersion: '3.0.0'
             }
         });
@@ -104,8 +113,8 @@ describe('raptor-modules/transport.getPathInfo' , function() {
         var path = nodePath.join(__dirname, "test-project/src/hello-world/index.js");
         var pathInfo = transport.getPathInfo(path);
         expect(pathInfo).to.deep.equal({
-            logicalPath: '/src/hello-world/index.js',
-            realPath: '/src/hello-world/index.js',
+            logicalPath: '/src/hello-world/index',
+            realPath: '/src/hello-world/index',
             filePath: path,
             isDir: false
         });

@@ -2,7 +2,7 @@ var nodePath = require('path');
 var Module = require('module').Module;
 
 function find(path, from, callback, thisObj) {
-    var paths = Module._nodeModulePaths(from);
+    
 
     if (process.platform === 'win32') {
         path = path.replace(/\//g, '\\'); // Replace forward slashes with back slashes
@@ -13,6 +13,8 @@ function find(path, from, callback, thisObj) {
         return callback.call(thisObj, nodePath.join(from, path));
     }
     else {
+        var paths = Module._nodeModulePaths(from);
+
         for (var i=0, len=paths.length; i<len; i++) {
             var searchPath = paths[i];
 

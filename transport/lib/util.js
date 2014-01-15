@@ -143,6 +143,7 @@ function getProjectRootDir(path) {
     return rootDir;
 }
 
+exports.removeExt = removeExt;
 exports.tryPackage = tryPackage;
 exports.findMain = findMain;
 exports.getProjectRootDir = getProjectRootDir;

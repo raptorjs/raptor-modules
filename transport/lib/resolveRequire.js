@@ -24,6 +24,9 @@ function resolveRequire(path, from) {
     if (resolvedPath) {
         return getPathInfo(resolvedPath);
     }
+    else {
+        throw new Error('Module not found: ' + path + ' (from: ' + from + ')');
+    }
 }
 
 module.exports = resolveRequire;

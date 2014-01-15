@@ -1,0 +1,22 @@
+var transport = require('../../transport');
+var fs = require('fs');
+
+module.exports = {
+    properties: {
+        'path': 'string'
+    },
+    
+    getDir: function() {
+        return this.getParentManifestDir();
+    },
+
+    read: function(context) {
+        return transport.runCode(
+            this.path, 
+            fs.createReadStream(this._file, {encoding: 'utf8'}));
+    },
+
+    lastModified: function() {
+        return this.resourceLastModified(this._file);
+    }
+};
