@@ -12,7 +12,7 @@ module.exports = {
     },
 
     read: function(context) {
-        return transport.dependencyCode(
+        return transport.registerDependencyCode(
             this.parentPath,
             this.childName,
             this.childVersion);
