@@ -24,13 +24,12 @@
         "__rhinoHelpers",
         "Packages",
         "JavaAdapter",
-        "unescape"
+        "unescape",
+        "describe"
     ],
 
     "globals": {
-        "require": true,
-        "describe": true,
-        "it": true
+        "require": true
     },
 
     "node" : true,
