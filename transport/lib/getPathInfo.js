@@ -25,7 +25,12 @@ function removeRegisteredExt(path) {
     }
 }
 
-function getPathInfo(path) {
+function getPathInfo(path, options) {
+    var removeExt = true;
+    if (options) {
+        removeExt = options.removeExt !== false;
+    }
+
     var root = getProjectRootDir(path);
     path = path.replace(/[\\]/g, '/');
 
@@ -68,14 +73,18 @@ function getPathInfo(path) {
 
     if (isDir) {
         var mainFilePath = findMain(path);
-        var mainRelPath = removeRegisteredExt(nodePath.relative(path, mainFilePath));
-        main = {
-            filePath: mainFilePath,
-            path: mainRelPath
-        };
+        if (mainFilePath) {
+            var mainRelPath = removeRegisteredExt(nodePath.relative(path, mainFilePath));
+            main = {
+                filePath: mainFilePath,
+                path: mainRelPath
+            };    
+        }
     } else {
-        logicalPath = removeRegisteredExt(logicalPath);
-        realPath = removeRegisteredExt(realPath);
+        if (removeExt) {
+            logicalPath = removeRegisteredExt(logicalPath);
+            realPath = removeRegisteredExt(realPath);
+        }
     }
 
     var result = {
