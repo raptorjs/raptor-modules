@@ -31,7 +31,7 @@ describe('raptor-modules/optimizer/Dependency_commonjs-run' , function() {
                 code += data;
             })
             .on('end', function() {
-                expect(code).to.equal('$rmod.run("/", function(require, exports, module, __filename, __dirname) { exports.foo = "1.0.0"; });');
+                expect(code).to.equal('$rmod.run("/", function(require, exports, module, __filename, __dirname) { exports.foo = "1.0.0";\nvar target = "baz";\nrequire(target); });');
                 done();
             })
             .on('error', done);
