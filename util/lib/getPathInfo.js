@@ -1,7 +1,10 @@
 var nodePath = require('path');
+var ok = require('assert').ok;
+
 var fs = require('fs');
-var getProjectRootDir = require('./util').getProjectRootDir;
-var findMain = require('./util').findMain;
+var raptorModulesUtil = require('../../util');
+var getProjectRootDir = raptorModulesUtil.getProjectRootDir;
+var findMain = raptorModulesUtil.findMain;
 
 function normalizeDepDirnames(path) {
     var parts = path.split('/');
@@ -26,6 +29,8 @@ function removeRegisteredExt(path) {
 }
 
 function getPathInfo(path, options) {
+    ok(typeof path === 'string', 'path should be a string');
+    
     var removeExt = true;
     if (options) {
         removeExt = options.removeExt !== false;
