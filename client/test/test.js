@@ -150,6 +150,9 @@ describe('raptor-modules/client' , function() {
         // /$/foo/$/baz --> baz@3.0.0
         clientImpl.registerDependency('/$/foo', 'baz', '3.0.0');
 
+        // Module "foo" requires "baz" 3.0.0
+        // This will create the following link:
+        // /$/bar/$/baz --> baz@3.0.0
         clientImpl.registerDependency('/$/bar', 'baz', '3.0.0');
 
         var bazFromFoo = clientImpl.require('baz/lib/index', '/$/foo');
@@ -162,8 +165,16 @@ describe('raptor-modules/client' , function() {
         expect(bazFromBar.moduleId).to.equal('/$/bar/$/baz/lib/index');
         expect(bazFromBar.moduleFilename).to.equal('/baz@3.0.0/lib/index');
 
-
         expect(instanceCount).to.equal(2);
+
+        done();
+    });
+
+    it('should throw exception if required module is not found', function(done) {
+
+        expect(function() {
+            require('something/that/does/not/exist');
+        }).to.throw(Error);
 
         done();
     });
@@ -223,6 +234,67 @@ describe('raptor-modules/client' , function() {
         expect(instanceCount).to.equal(1);
 
         done();
+    });
+
+    it('provide require function to module', function(done) {
+        var clientImpl = require('../lib/index');
+
+        clientImpl.define('/app/launch/util', function(require, exports, module, __filename, __dirname) {
+            module.exports.sayHello = function() {
+                return 'Hello!';
+            };
+        });
+
+        // define a module for a given real path
+        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+
+            var util;
+
+            // test requesting
+            util = require('./util');
+            expect(Object.keys(util)).to.deep.equal(['sayHello']);
+
+            // test requiring something via absolute path
+            util = require('/app/launch/util');
+            expect(Object.keys(util)).to.deep.equal(['sayHello']);
+
+            module.exports = {
+                greeting: util.sayHello()
+            };
+        });
+
+        // you can also require the instance again if you really want to
+        var launch = clientImpl.require('/app/launch/index', '/$/foo');
+
+        expect(launch.greeting).to.equal('Hello!');
+
+        done();
+    });
+
+    it('provide require function that has a resolve property', function(done) {
+
+        var clientImpl = require('../lib/index');
+
+        clientImpl.define('/app/launch/util', function(require, exports, module, __filename, __dirname) {
+            module.exports.sayHello = function() {
+                return 'Hello!';
+            };
+        });
+        
+        // define a module for a given real path
+        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+
+            expect(require('./util')).to.equal(require(require.resolve('./util')));
+
+            var util = require('./util');
+
+            module.exports = {
+                greeting: util.sayHello()
+            };
+        });
+
+        done();
+
     });
 
     it('should normalize paths', function(done) {

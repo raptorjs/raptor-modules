@@ -48,7 +48,6 @@ proto.load = function(realPath) {
 
     var factoryOrObject = definitions[realPath];
     if (factoryOrObject && factoryOrObject.constructor === Function) {
-
         var pos = realPath.lastIndexOf('/');
         var dirname = realPath.substring(0, pos);
         var filename = realPath;
@@ -56,6 +55,10 @@ proto.load = function(realPath) {
         // this is the require used by the module
         var instanceRequire = function(target) {
             return require(target, dirname);
+        };
+
+        instanceRequire.resolve = function(target) {
+            return resolve(target, dirname).logicalPath;
         };
 
         // NodeJS provides access to the cache as a property of the "require" function
@@ -93,7 +96,7 @@ function registerDependency(logicalParentPath, dependencyId, dependencyVersion) 
     dependencies[logicalPath] =  dependencyVersion;
 }
 
-function resolvedInfo(logicalPath, dependencyId, subpath, dependencyVersion) {
+function resolveInfo(logicalPath, dependencyId, subpath, dependencyVersion) {
     // Our internal module resolver will return an object with the following properties:
     // - logicalPath: The logical path of the module (used for caching instances)
     // - realPath: The real path of the module (used for instantiating new instances via factory)
@@ -152,7 +155,7 @@ function join(first, second) {
     return normalizePathParts(first.split('/').concat(second.split('/')));
 }
 
-function resolveAbsolute(target, from) {
+function resolveAbsolute(target) {
     var start = target.lastIndexOf('$');
     if (start === -1) {
         // target is something like "/foo/baz"
@@ -196,14 +199,10 @@ function resolveAbsolute(target, from) {
     // lookup the version
     var dependencyVersion = dependencies[logicalPath];
     if (dependencyVersion) {
-        return resolvedInfo(logicalPath, dependencyId, subpath, dependencyVersion);
+        return resolveInfo(logicalPath, dependencyId, subpath, dependencyVersion);
     }
 
     return null;
-}
-
-function resolveRelative(target, from) {
-    return resolveAbsolute(join(from, target));
 }
 
 function resolve(target, from) {
@@ -213,11 +212,11 @@ function resolve(target, from) {
     }
 
     if (target.charAt(0) === '.') {
-        return resolveRelative(target, from);
+        return resolveAbsolute(join(from, target));
     }
 
     if (target.charAt(0) === '/') {
-        return resolveAbsolute(normalize(target), from);
+        return resolveAbsolute(normalize(target));
     }
 
     var dependencyVersion;
@@ -255,7 +254,7 @@ function resolve(target, from) {
     var logicalPath = from + '/$/' + dependencyId;
     dependencyVersion = dependencies[logicalPath];
     if (dependencyVersion) {
-        return resolvedInfo(logicalPath, dependencyId, subpath, dependencyVersion);
+        return resolveInfo(logicalPath, dependencyId, subpath, dependencyVersion);
     }
 
     var end = from.lastIndexOf('/');
@@ -279,7 +278,7 @@ function resolve(target, from) {
             logicalPath = from.substring(0, end) + '/$/' + dependencyId;
             dependencyVersion = dependencies[logicalPath];
             if (dependencyVersion) {
-                return resolvedInfo(logicalPath, dependencyId, subpath, dependencyVersion);
+                return resolveInfo(logicalPath, dependencyId, subpath, dependencyVersion);
             }
 
             end = from.lastIndexOf('/', start - 1);
@@ -302,7 +301,10 @@ function require(target, from) {
 
     var logicalPath = resolved.logicalPath;
     module = new Module(logicalPath);
+
+    // cache the instance before loading (allows support for circular dependency with partial loading)
     instanceCache[logicalPath] = module;
+
     module.load(resolved.realPath);
 
     return module.exports;
