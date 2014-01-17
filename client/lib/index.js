@@ -14,7 +14,7 @@ resolve dependencies on client-side (in the browser).
 var definitions = {};
 
 // this object stores the Module instance cache with the keys being logical paths of modules (e.g., "/$/foo/$/baz" --> Module)
-var modules = {};
+var instanceCache = {};
 
 // this object maps dependency logical path to a specific version (for example, "/$/foo/$/baz" --> "3.0.0")
 var dependencies = {};
@@ -22,12 +22,16 @@ var dependencies = {};
 // temporary variable for referencing a prototype
 var proto;
 
-function Module() {
+function Module(logicalPath, parent) {
+    this.id = logicalPath;
+    this.parent = parent;
+    this.loaded = false;
+
     /*
     A Node module has these properties:
-    - filename: The logical path of the module
-    - id: (same as filename)
-    - exports: The exports provided during instantiation
+    - filename: The real path of the module
+    - id: The logical path of the module
+    - exports: The exports provided during load
     - parent: parent Module
     - loaded: Has module been fully loaded (set to false until factory function returns)
     - children: The modules that were required by this module
@@ -35,41 +39,39 @@ function Module() {
     */
 }
 
+Module.cache = instanceCache;
+
 var proto = Module.prototype;
-/*
-proto.createInstance = function(logicalPath) {
-    
-    var factoryOrObject = this.factoryOrObject;
 
-    // check to see if we need to call a factory function to get the module instance
-    if (!factoryOrObject || factoryOrObject.constructor !== Function) {
-        // factoryObject is definitely not a function so use the factory object as the instance
-        this.exports = exports = factoryOrObject;
-    } else {
+proto.load = function(realPath) {
+    this.filename = realPath;
 
-        // exports is an empty object
-        this.exports = exports = {};
+    var factoryOrObject = definitions[realPath];
+    if (factoryOrObject && factoryOrObject.constructor === Function) {
 
-        // realPath is the __filename
-        var realPath = this.realPath;
-
-        //find the last slash position so that we can get the directory name substring
         var pos = realPath.lastIndexOf('/');
+        var dirname = realPath.substring(0, pos);
+        var filename = realPath;
 
-        // the require function is scoped to this module instance
-        var require = function(logicalPath) {
-
+        // this is the require used by the module
+        var instanceRequire = function(target) {
+            return require(target, dirname);
         };
 
-        // NOTE: We are using the scope of this Module instance but I don't know if we should do that
-        factoryOrObject.call(this, require, exports, this, realPath, realPath.substring(0, pos));
+        // NodeJS provides access to the cache as a property of the "require" function
+        instanceRequire.cache = instanceCache;
 
-        // The factory function may have changed the exports property to a new value so make sure
-        // the local exports variable references the latest exports
-        exports = this.exports;
+        // $rmod.def("/foo@1.0.0/lib/index", function(require, exports, module, __filename, __dirname) {
+        this.exports = {};
+
+        // call the factory function
+        factoryOrObject.call(this, instanceRequire, this.exports, this, filename, dirname);
+
+        this.loaded = true;
+    } else {
+        this.exports = factoryOrObject;
     }
 };
-*/
 
 /**
  * Defines a packages whose metadata is used by raptor-loader to load the package.
@@ -81,6 +83,7 @@ function define(realPath, factoryOrObject) {
     });
     */
 
+    // Apparently, the override for making an assignment and returning a value at the same time is "boss"
     /* jshint boss:true */
     return (definitions[realPath] = factoryOrObject);
 }
@@ -100,24 +103,40 @@ function resolvedInfo(logicalPath, dependencyId, subpath, dependencyVersion) {
     };
 }
 
+/**
+ * This function will take an array of path parts and normalize them by handling handle ".." and "."
+ * and then joining the resultant string.
+ *
+ * @param {Array} parts an array of parts that presumedly was split on the "/" character.
+ */
 function normalizePathParts(parts) {
     var i;
     var len = 0;
 
     var numParts = parts.length;
+
+    var leadingSlash = (parts.length > 1) && (parts[0].length === 0);
+
     for (i = 0; i < numParts; i++) {
         var part = parts[i];
         // ignore parts with just "."
-        if (part !== '.') {
-            if (part === '..') {
-                // overwrite the previous item by decrementing length
-                len--;
-            } else {
-                // add this part to result and increment length
-                parts[len] = part;
-                len++;
+        if (part === '.') {
+            // if the "." is at end of parts (e.g. ["a", "b", "."]) then trim it off
+            if (i === numParts - 1) {
+                //len--;
             }
+        } else if (part === '..') {
+            // overwrite the previous item by decrementing length
+            len--;
+        } else {
+            // add this part to result and increment length
+            parts[len] = part;
+            len++;
         }
+    }
+
+    if ((len === 1) && (parts[0] === '') && leadingSlash) {
+        return '/';
     }
 
     // truncate parts to remove unused
@@ -130,9 +149,7 @@ function normalize(path) {
 }
 
 function join(first, second) {
-    var firstParts = first.split('/');
-    var secondParts = second.split('/');
-    return normalizePathParts(firstParts.concat(secondParts));
+    return normalizePathParts(first.split('/').concat(second.split('/')));
 }
 
 function resolveAbsolute(target, from) {
@@ -146,24 +163,37 @@ function resolveAbsolute(target, from) {
     }
 
     // target is something like "/$/foo/$/baz/lib/index"
+
+    // "start" is currently pointing to the last "$". We want to find the dependencyId
+    // which will start after after the substring "$/" (so we increment by two)
     start += 2;
+
+    // the "end" needs to point to the slash that follows the "$" (if there is one)
     var end = target.indexOf('/', start + 3);
     var logicalPath;
     var subpath;
     var dependencyId;
 
     if (end === -1) {
-        // target is something like "/$/foo/$/baz"
+        // target is something like "/$/foo/$/baz" so there is no subpath after the dependencyId
         logicalPath = target;
         subpath = '';
         dependencyId = target.substring(start);
     } else {
-        // target is something like "/$/foo/$/baz/lib/index"
+        // target is something like "/$/foo/$/baz/lib/index" so we need to separate subpath
+        // from the dependencyId
+
+        // logical path should not include the subpath
         logicalPath = target.substring(0, end);
+
+        // subpath will be something like "/lib/index"
         subpath = target.substring(end);
+
+        // dependencyId will be something like "baz" (will not contain slashes)
         dependencyId = target.substring(start, end);
     }
 
+    // lookup the version
     var dependencyVersion = dependencies[logicalPath];
     if (dependencyVersion) {
         return resolvedInfo(logicalPath, dependencyId, subpath, dependencyVersion);
@@ -239,7 +269,7 @@ function resolve(target, from) {
                 break;
             }
 
-            // check to see if the substring from start:end is '/$/'
+            // check to see if the substring from [start:end] is '/$/'
             if ((end - start === 2) && (from.charAt(start + 1) === '$')) {
                 // skip look at this subpath because it ends with "/$/"
                 end = start;
@@ -259,13 +289,37 @@ function resolve(target, from) {
     return null;
 }
 
+function require(target, from) {
+    var resolved = resolve(target, from);
+    if (resolved === null) {
+        throw new Error('Not found: ' + target);
+    }
+
+    var module = instanceCache[resolved.logicalPath];
+    if (module !== undefined) {
+        return module.exports;
+    }
+
+    var logicalPath = resolved.logicalPath;
+    module = new Module(logicalPath);
+    instanceCache[logicalPath] = module;
+    module.load(resolved.realPath);
+
+    return module.exports;
+}
+
 /*
 $rmod.run('/src/ui-pages/login/login-page', function(require, exports, module, __filename, __dirname) {
     // module source code goes here
 });
 */
-function runModule(logicalPath, factory) {
-    
+function run(logicalPath, factory) {
+    define(logicalPath, factory);
+
+    var module = new Module(logicalPath);
+    module = new Module(logicalPath);
+    instanceCache[logicalPath] = module;
+    module.load(logicalPath);
 }
 
 /*
@@ -275,7 +329,7 @@ function runModule(logicalPath, factory) {
 var $rmod = {
     def: define,
     dep: registerDependency,
-    run: runModule,
+    run: run
     //main: registerMain
 };
 
@@ -288,8 +342,13 @@ if (typeof window === 'undefined') {
         define: define,
         registerDependency: registerDependency,
         resolve: resolve,
-        runModule: runModule,
+        require: require,
+        run: run,
+
+        // expose normalize for unit testing
         normalize: normalize,
+
+        // expose join for unit testing
         join: join
     };
 } else {
