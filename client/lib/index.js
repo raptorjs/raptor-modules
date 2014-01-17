@@ -302,9 +302,7 @@ function require(target, from) {
 
     var logicalPath = resolved.logicalPath;
     module = new Module(logicalPath);
-
     instanceCache[logicalPath] = module;
-
     module.load(resolved.realPath);
 
     return module.exports;
@@ -315,8 +313,13 @@ $rmod.run('/src/ui-pages/login/login-page', function(require, exports, module, _
     // module source code goes here
 });
 */
-function runModule(logicalPath, factory) {
-    
+function run(logicalPath, factory) {
+    define(logicalPath, factory);
+
+    var module = new Module(logicalPath);
+    module = new Module(logicalPath);
+    instanceCache[logicalPath] = module;
+    module.load(logicalPath);
 }
 
 /*
@@ -326,7 +329,7 @@ function runModule(logicalPath, factory) {
 var $rmod = {
     def: define,
     dep: registerDependency,
-    run: runModule,
+    run: run
     //main: registerMain
 };
 
@@ -340,7 +343,7 @@ if (typeof window === 'undefined') {
         registerDependency: registerDependency,
         resolve: resolve,
         require: require,
-        runModule: runModule,
+        run: run,
 
         // expose normalize for unit testing
         normalize: normalize,

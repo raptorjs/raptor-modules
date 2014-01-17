@@ -127,7 +127,39 @@ describe('raptor-modules/client' , function() {
         done();
     });
 
-    it('should handle load module exceptions', function(done) {
+    it('should run modules', function(done) {
+        var clientImpl = require('../lib/index');
+
+        var instanceCount = 0;
+
+        // define a module for a given real path
+        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+            instanceCount++;
+            module.exports = {
+                __filename: __filename,
+                __dirname: __dirname
+            };
+        });
+
+        // run will define the instance and automatically load it
+        expect(instanceCount).to.equal(1);
+
+        // you can also require the instance again if you really want to
+        var launch = clientImpl.require('/app/launch/index', '/$/foo');
+
+        expect(instanceCount).to.equal(1);
+
+        expect(launch.__filename).to.equal('/app/launch/index');
+        expect(launch.__dirname).to.equal('/app/launch');
+
+        // use a relative path to require it as well
+        launch = clientImpl.require('./index', '/app/launch');
+
+        expect(launch.__filename).to.equal('/app/launch/index');
+        expect(launch.__dirname).to.equal('/app/launch');
+
+        expect(instanceCount).to.equal(1);
+
         done();
     });
 
