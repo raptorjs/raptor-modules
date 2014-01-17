@@ -1,6 +1,8 @@
 'use strict';
 
-var expect = require('chai').expect;
+var chai = require('chai');
+chai.Assertion.includeStack = true;
+var expect = chai.expect;
 
 describe('raptor-modules/client' , function() {
 
@@ -62,7 +64,7 @@ describe('raptor-modules/client' , function() {
         // /$/foo/$/baz --> baz@3.0.0
         clientImpl.registerDependency('/$/foo', 'baz', '3.0.0');
 
-        // Make sure that if we try to resolve "baz" from within some module
+        // Make sure that if we try to resolve "baz" with  from within some module
         // located at "/$/foo" then we should get back "/$/foo/$/baz"
         resolved = clientImpl.resolve(
             '/$/foo/$/baz/lib/index' /* target is absolute path */,
@@ -92,19 +94,71 @@ describe('raptor-modules/client' , function() {
         done();
     });
 
+    it('should instantiate modules', function(done) {
+        var clientImpl = require('../lib/index');
+
+        var instanceCount = 0;
+
+        // define a module for a given real path
+        clientImpl.define('/baz@3.0.0/lib/index', function(require, exports, module, __filename, __dirname) {
+            instanceCount++;
+            module.exports = {
+                __filename: __filename,
+                __dirname: __dirname
+            };
+        });
+
+        // Module "foo" requires "baz" 3.0.0
+        // This will create the following link:
+        // /$/foo/$/baz --> baz@3.0.0
+        clientImpl.registerDependency('/$/foo', 'baz', '3.0.0');
+
+        var baz = clientImpl.require('baz/lib/index', '/$/foo');
+
+        expect(instanceCount).to.equal(1);
+
+        expect(baz.__filename).to.equal('/baz@3.0.0/lib/index');
+        expect(baz.__dirname).to.equal('/baz@3.0.0/lib');
+
+        clientImpl.require('baz/lib/index', '/$/foo');
+
+        expect(instanceCount).to.equal(1);
+
+        done();
+    });
+
+    it('should handle load module exceptions', function(done) {
+        done();
+    });
+
     it('should normalize paths', function(done) {
         var clientImpl = require('../lib/index');
         expect(clientImpl.normalize('abc')).to.equal('abc');
         expect(clientImpl.normalize('./abc')).to.equal('abc');
         expect(clientImpl.normalize('abc/./def')).to.equal('abc/def');
         expect(clientImpl.normalize('abc/../def')).to.equal('def');
+        expect(clientImpl.normalize('abc/..')).to.equal('');
+        expect(clientImpl.normalize('/abc/..')).to.equal('/');
+        expect(clientImpl.normalize('/.')).to.equal('/');
+        expect(clientImpl.normalize('')).to.equal('');
+        expect(clientImpl.normalize('/abc/def/.')).to.equal('/abc/def');
         done();
     });
 
-    it('should join paths', function(done) {
+    it('should join relative paths', function(done) {
+        // NOTE: Second argument to join should start with "." or "..".
+        //       I don't care about joining an absolute path, empty string
+        //       or even a "module name" because these are handled specially
+        //       in the resolve method.
         var clientImpl = require('../lib/index');
         expect(clientImpl.join('/foo/baz', './abc.js')).to.equal('/foo/baz/abc.js');
         expect(clientImpl.join('/foo/baz', '../abc.js')).to.equal('/foo/abc.js');
+        expect(clientImpl.join('/foo', '..')).to.equal('/');
+        expect(clientImpl.join('/foo', '../..')).to.equal('');
+        expect(clientImpl.join('foo', '..')).to.equal('');
+        expect(clientImpl.join('foo/bar', '../test.js')).to.equal('foo/test.js');
+        expect(clientImpl.join('abc/def', '.')).to.equal('abc/def');
+        expect(clientImpl.join('/', '.')).to.equal('/');
         done();
     });
 });
