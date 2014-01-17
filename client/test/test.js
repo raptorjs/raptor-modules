@@ -102,6 +102,7 @@ describe('raptor-modules/client' , function() {
         // define a module for a given real path
         clientImpl.define('/baz@3.0.0/lib/index', function(require, exports, module, __filename, __dirname) {
             instanceCount++;
+
             module.exports = {
                 __filename: __filename,
                 __dirname: __dirname
@@ -123,6 +124,67 @@ describe('raptor-modules/client' , function() {
         clientImpl.require('baz/lib/index', '/$/foo');
 
         expect(instanceCount).to.equal(1);
+
+        done();
+    });
+
+    it('should instantiate multiple instances of module if loaded from separate logical paths', function(done) {
+        var clientImpl = require('../lib/index');
+
+        var instanceCount = 0;
+
+        // define a module for a given real path
+        clientImpl.define('/baz@3.0.0/lib/index', function(require, exports, module, __filename, __dirname) {
+            instanceCount++;
+
+            module.exports = {
+                __filename: __filename,
+                __dirname: __dirname,
+                moduleId: module.id,
+                moduleFilename: module.filename
+            };
+        });
+
+        // Module "foo" requires "baz" 3.0.0
+        // This will create the following link:
+        // /$/foo/$/baz --> baz@3.0.0
+        clientImpl.registerDependency('/$/foo', 'baz', '3.0.0');
+
+        clientImpl.registerDependency('/$/bar', 'baz', '3.0.0');
+
+        var bazFromFoo = clientImpl.require('baz/lib/index', '/$/foo');
+        expect(bazFromFoo.moduleId).to.equal('/$/foo/$/baz/lib/index');
+        expect(bazFromFoo.moduleFilename).to.equal('/baz@3.0.0/lib/index');
+
+        expect(instanceCount).to.equal(1);
+
+        var bazFromBar = clientImpl.require('baz/lib/index', '/$/bar');
+        expect(bazFromBar.moduleId).to.equal('/$/bar/$/baz/lib/index');
+        expect(bazFromBar.moduleFilename).to.equal('/baz@3.0.0/lib/index');
+
+
+        expect(instanceCount).to.equal(2);
+
+        done();
+    });
+
+    it('should load modules that are objects', function(done) {
+        var clientImpl = require('../lib/index');
+
+
+        // define a module for a given real path
+        clientImpl.define('/baz@3.0.0/lib/index', {
+            test: true
+        });
+
+        // Module "foo" requires "baz" 3.0.0
+        // This will create the following link:
+        // /$/foo/$/baz --> baz@3.0.0
+        clientImpl.registerDependency('/$/foo', 'baz', '3.0.0');
+
+        var baz = clientImpl.require('baz/lib/index', '/$/foo');
+
+        expect(baz.test).to.equal(true);
 
         done();
     });

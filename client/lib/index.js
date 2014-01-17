@@ -29,9 +29,9 @@ function Module(logicalPath, parent) {
 
     /*
     A Node module has these properties:
-    - filename: The logical path of the module
-    - id: (same as filename)
-    - exports: The exports provided during instantiation
+    - filename: The real path of the module
+    - id: The logical path of the module
+    - exports: The exports provided during load
     - parent: parent Module
     - loaded: Has module been fully loaded (set to false until factory function returns)
     - children: The modules that were required by this module
@@ -44,7 +44,7 @@ Module.cache = instanceCache;
 var proto = Module.prototype;
 
 proto.load = function(realPath) {
-    this.realPath = realPath;
+    this.filename = realPath;
 
     var factoryOrObject = definitions[realPath];
     if (factoryOrObject && factoryOrObject.constructor === Function) {
