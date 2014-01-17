@@ -7,7 +7,7 @@
     "url": "https://github.com/raptorjs/raptor-modules.git"
   },
   "scripts": {
-    "test": "node_modules/.bin/mocha --ui bdd --reporter spec ./test && node_modules/.bin/mocha --ui bdd --reporter spec ./transport/test && node_modules/.bin/mocha --ui bdd --reporter spec  ./client/test && node_modules/.bin/mocha --ui bdd --reporter spec ./optimizer/test"
+    "test": "node_modules/.bin/mocha --ui bdd --reporter spec ./test && node_modules/.bin/mocha --ui bdd --reporter spec ./transport/test && node_modules/.bin/mocha --ui bdd --reporter spec  ./client/test && node_modules/.bin/mocha --ui bdd --reporter spec ./optimizer/test && node_modules/.bin/mocha --ui bdd --reporter spec ./resolver/test"
   },
   "author": "Patrick Steele-Idem <psteeleidem@ebay.com>",
   "maintainers": "Patrick Steele-Idem <psteeleidem@ebay.com>",

@@ -1,5 +1,7 @@
 var nodePath = require('path');
-var transport = require('../../transport');
+var getPathInfo = require('../../util').getPathInfo;
+var resolveRequire = require('../../resolver').resolveRequire;
+
 var detective = require('detective');
 var fs = require('fs');
 var raptorPromises = require('raptor-promises');
@@ -39,8 +41,8 @@ module.exports = {
         }
         
         this._resolved = this.resolvedPath ? 
-            transport.getPathInfo(this.resolvedPath) :
-            transport.resolveRequire(this.path, this.from);
+            getPathInfo(this.resolvedPath) :
+            resolveRequire(this.path, this.from);
     },
     
     getDir: function() {
