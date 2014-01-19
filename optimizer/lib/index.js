@@ -1,4 +1,5 @@
 require('raptor-ecma/es6');
+var extend = require('raptor-util').extend;
 
 function registerDependencyTypes(optimizer) {
     optimizer.dependencies.registerPackageType('require', require('./Dependency_require'));
@@ -16,10 +17,14 @@ function registerDependencyTypes(optimizer) {
         }
         else if (!dependency.type) {
             if (dependency.require) {
-                return {
+                var reqDep = {
                     type: 'require',
-                    path: dependency.substring('require '.length)
-                };       
+                    path: dependency.require
+                };
+
+                delete dependency.require;
+                extend(reqDep, dependency);
+                return reqDep;
             }
         }
     });
