@@ -47,7 +47,7 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
 
                 expect(lookup['commonjs-main']).to.deep.equal({
                     type: 'commonjs-main',
-                    path: '/bar@2.0.0',
+                    dir: '/bar@2.0.0',
                     main: 'lib/index'
                 });
 
@@ -134,7 +134,7 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
 
                 expect(lookup['commonjs-main']).to.deep.equal({
                     type: 'commonjs-main',
-                    path: '/baz@3.0.0',
+                    dir: '/baz@3.0.0',
                     main: 'lib/index'
                 });
 

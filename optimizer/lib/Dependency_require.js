@@ -69,6 +69,7 @@ module.exports = {
 
         return findRequires(resolved)
             .then(function(requires) {
+
                 var dependencies = [];
                 var dep = resolved.dep;
                 var main = resolved.main;
@@ -85,7 +86,7 @@ module.exports = {
                 if (main) {
                     dependencies.push({
                         type: 'commonjs-main',
-                        path: resolved.realPath,
+                        dir: resolved.realPath,
                         main: main.path
                     });
 
