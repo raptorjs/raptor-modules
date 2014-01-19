@@ -3,8 +3,8 @@
         
     ],
 
-    "globals": { 
-        "define": true, 
+    "globals": {
+        "define": true,
         "require": true
     },
 
@@ -32,7 +32,7 @@
     "sub": false,
     "white": false,
     "eqeqeq": false,
-    "latedef": true,
+    "latedef": "nofunc",
     "unused": "vars",
     
     /* Relaxing options: */

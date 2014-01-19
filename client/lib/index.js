@@ -4,7 +4,7 @@
 /*
 https://github.com/joyent/node/blob/master/lib/module.js
 
-GOAL: This module should exactly mirror the NodeJS module system.
+GOAL: This module should mirror the NodeJS module system according the documented behavior.
 The module transport will generate code that is used for resolving
 real paths for a given logical path. This information is used to
 resolve dependencies on client-side (in the browser).
@@ -22,34 +22,45 @@ var dependencies = {};
 // temporary variable for referencing a prototype
 var proto;
 
-function Module(logicalPath, parent) {
-    this.id = logicalPath;
-    this.parent = parent;
-    this.loaded = false;
+function moduleNotFoundError(target) {
+    var err = new Error('Cannot find module "' + target + '"');
+    err.code = 'MODULE_NOT_FOUND';
+    return err;
+}
 
-    /*
+function Module(resolved) {
+   /*
     A Node module has these properties:
     - filename: The real path of the module
     - id: The logical path of the module
     - exports: The exports provided during load
-    - parent: parent Module
     - loaded: Has module been fully loaded (set to false until factory function returns)
+    
+    NOT SUPPORTED BY RAPTOR:
+    - parent: parent Module
+    - paths: The search path used by this module (NOTE: not documented in Node.js module system so we don't need support)
     - children: The modules that were required by this module
-    - paths: The search path used by this module (not documented in Node.js module system so we don't need support)
     */
+    this.id = resolved[0];
+    this.filename = resolved[1];
+    this.loaded = false;
 }
 
 Module.cache = instanceCache;
 
 var proto = Module.prototype;
 
-proto.load = function(realPath) {
-    this.filename = realPath;
+proto.load = function(factoryOrObject) {
+    var realPath = this.filename;
 
-    var factoryOrObject = definitions[realPath];
     if (factoryOrObject && factoryOrObject.constructor === Function) {
+        // factoryOrObject is definitely a function
         var pos = realPath.lastIndexOf('/');
+
+        // find the value for the __dirname parameter to factory
         var dirname = realPath.substring(0, pos);
+
+        // find the value for the __filename paramter to factory
         var filename = realPath;
 
         // this is the require used by the module
@@ -57,8 +68,22 @@ proto.load = function(realPath) {
             return require(target, dirname);
         };
 
+        // The require method should have a resolve method that will return logical
+        // path but not actually instantiate the module.
+        // This resolve function will make sure a definition exists for the corresponding
+        // real path of the target but it will not instantiate a new instance of the target.
         instanceRequire.resolve = function(target) {
-            return resolve(target, dirname).logicalPath;
+            var resolved = resolve(target, dirname);
+            if (resolved === null) {
+                throw moduleNotFoundError(target);
+            }
+
+            // Make sure the target exists and that there is a definition for it
+            verifyResolve(target, resolved);
+
+            // Return logical path
+            // NOTE: resolved[0] is logical path
+            return resolved[0];
         };
 
         // NodeJS provides access to the cache as a property of the "require" function
@@ -72,6 +97,7 @@ proto.load = function(realPath) {
 
         this.loaded = true;
     } else {
+        // factoryOrObject is not a function so have exports reference factoryOrObject
         this.exports = factoryOrObject;
     }
 };
@@ -92,18 +118,26 @@ function define(realPath, factoryOrObject) {
 }
 
 function registerDependency(logicalParentPath, dependencyId, dependencyVersion) {
-    var logicalPath = logicalParentPath + '/$/' + dependencyId;
-    dependencies[logicalPath] =  dependencyVersion;
+    dependencies[logicalParentPath + '/$/' + dependencyId] =  dependencyVersion;
 }
 
-function resolveInfo(logicalPath, dependencyId, subpath, dependencyVersion) {
-    // Our internal module resolver will return an object with the following properties:
+/**
+ * @param {String} logicalParentPath the path from which given dependencyId is required
+ * @param {String} dependencyId the name of the module (e.g. "async") (NOTE: should not contain slashes)
+ * @param {String} full version of the dependency that is required from given logical parent path
+ */
+function versionedDependencyInfo(logicalPath, dependencyId, subpath, dependencyVersion) {
+    // Our internal module resolver will return an array with the following properties:
     // - logicalPath: The logical path of the module (used for caching instances)
     // - realPath: The real path of the module (used for instantiating new instances via factory)
-    return {
-        logicalPath: logicalPath + subpath,
-        realPath: '/' + dependencyId + '@' + dependencyVersion + subpath,
-    };
+    // return [logicalPath, realPath]
+    return [
+        // logical path:
+        logicalPath + subpath,
+
+        // real path:
+        '/' + dependencyId + '@' + dependencyVersion + subpath
+    ];
 }
 
 /**
@@ -118,7 +152,8 @@ function normalizePathParts(parts) {
 
     var numParts = parts.length;
 
-    var leadingSlash = (parts.length > 1) && (parts[0].length === 0);
+    // special handling is needed if input is ["", "."] */
+    var leadingSlash = (numParts > 1) && (parts[0].length === 0);
 
     for (i = 0; i < numParts; i++) {
         var part = parts[i];
@@ -139,6 +174,9 @@ function normalizePathParts(parts) {
     }
 
     if ((len === 1) && (parts[0] === '') && leadingSlash) {
+        // if we end up with just one part that is empty string
+        // (which can happen if input is ["", "."]) then return
+        // string with just the leading slash
         return '/';
     }
 
@@ -159,10 +197,10 @@ function resolveAbsolute(target) {
     var start = target.lastIndexOf('$');
     if (start === -1) {
         // target is something like "/foo/baz"
-        return {
-            logicalPath: target,
-            realPath: target
-        };
+        // There is no installed module in the path
+
+        // return [logicalPath, realPath, factoryOrObject]
+        return [target, target];
     }
 
     // target is something like "/$/foo/$/baz/lib/index"
@@ -198,11 +236,7 @@ function resolveAbsolute(target) {
 
     // lookup the version
     var dependencyVersion = dependencies[logicalPath];
-    if (dependencyVersion) {
-        return resolveInfo(logicalPath, dependencyId, subpath, dependencyVersion);
-    }
-
-    return null;
+    return dependencyVersion ? versionedDependencyInfo(logicalPath, dependencyId, subpath, dependencyVersion) : null;
 }
 
 function resolve(target, from) {
@@ -212,6 +246,7 @@ function resolve(target, from) {
     }
 
     if (target.charAt(0) === '.') {
+        // turn relative path into absolute path
         return resolveAbsolute(join(from, target));
     }
 
@@ -219,12 +254,10 @@ function resolve(target, from) {
         return resolveAbsolute(normalize(target));
     }
 
-    var dependencyVersion;
-    var pos;
     var dependencyId;
     var subpath;
 
-    pos = target.indexOf('/');
+    var pos = target.indexOf('/');
     if (pos === -1) {
         dependencyId = target;
         subpath = '';
@@ -235,7 +268,7 @@ function resolve(target, from) {
     }
 
     /*
-    Consider when the module "baz" (which is required by "foo") requires module "async":
+    Consider when the module "baz" (which is a dependency of "foo") requires module "async":
     resolve('async', '/$/foo/$/baz');
 
     // TRY
@@ -249,12 +282,12 @@ function resolve(target, from) {
     */
 
     // First check to see if there is a sibling "$" with the given target
-    // by adding "/$/<target>" to the given from path.
+    // by adding "/$/<target>" to the given "from" path.
     // If the given from is "/$/foo/$/baz" then we will try "/$/foo/$/baz/$/async"
     var logicalPath = from + '/$/' + dependencyId;
-    dependencyVersion = dependencies[logicalPath];
+    var dependencyVersion = dependencies[logicalPath];
     if (dependencyVersion) {
-        return resolveInfo(logicalPath, dependencyId, subpath, dependencyVersion);
+        return versionedDependencyInfo(logicalPath, dependencyId, subpath, dependencyVersion);
     }
 
     var end = from.lastIndexOf('/');
@@ -278,7 +311,7 @@ function resolve(target, from) {
             logicalPath = from.substring(0, end) + '/$/' + dependencyId;
             dependencyVersion = dependencies[logicalPath];
             if (dependencyVersion) {
-                return resolveInfo(logicalPath, dependencyId, subpath, dependencyVersion);
+                return versionedDependencyInfo(logicalPath, dependencyId, subpath, dependencyVersion);
             }
 
             end = from.lastIndexOf('/', start - 1);
@@ -288,24 +321,97 @@ function resolve(target, from) {
     return null;
 }
 
+function withoutExtension(path) {
+    var lastDotPos = path.lastIndexOf('.');
+    var lastSlashPos;
+
+    /* jshint laxbreak:true */
+    return ((lastDotPos === -1) || ((lastSlashPos = path.lastIndexOf('/')) !== -1) && (lastSlashPos > lastDotPos))
+        ? null // use null to indicate that returned path is same as given path
+        : path.substring(0, lastDotPos);
+}
+
+function truncate(str, length) {
+    return str.substring(0, str.length - length);
+}
+
+/*
+ * When using the resolve function, we calculate the logical path and real path
+ * using search path rules. The resolve function will detect missing module
+ * symbolic links and return null. However, the resolve function will not do the
+ * following:
+ * - Check for definition with and without the given extension
+ * - Apply remapping rules (used when transport layer decides to remap some logical paths)
+ */
+// NOTE: This function has side effects despite its name. The given resolved
+// parameter (which is an array) will be updated to reflect the revised
+// logical and real paths for the given target.
+function verifyResolve(target, resolved, logicalPathWithoutExtension) {
+
+    var realPath = resolved[1];
+
+    // Retrieve the factory object
+    var factoryOrObject = definitions[realPath];
+    if (factoryOrObject !== undefined) {
+        return factoryOrObject;
+    }
+
+    var logicalPath = resolved[0];
+
+    // We will try without the extension
+    if (logicalPathWithoutExtension === undefined) {
+        logicalPathWithoutExtension = withoutExtension(logicalPath);
+    }
+
+    if ((logicalPathWithoutExtension === null) ||
+        ((factoryOrObject = definitions[realPath = truncate(realPath, logicalPath.length - logicalPathWithoutExtension.length)]) === undefined)) {
+        // An "undefined" factory means that there is no factory function or no value for the given definition
+        throw moduleNotFoundError(target);
+    }
+
+    // remove extension from logical path
+    resolved[0] = logicalPathWithoutExtension;
+
+    // update real path since we removed the extension
+    resolved[1] = realPath;
+
+    return factoryOrObject;
+}
+
 function require(target, from) {
     var resolved = resolve(target, from);
     if (resolved === null) {
-        throw new Error('Not found: ' + target);
+        throw moduleNotFoundError(target);
     }
 
-    var module = instanceCache[resolved.logicalPath];
-    if (module !== undefined) {
+    var logicalPath = resolved[0];
+    var module = instanceCache[logicalPath];
+    var logicalPathWithoutExtension;
+
+    if (module === undefined) {
+        logicalPathWithoutExtension = withoutExtension(logicalPath);
+
+        // try to find cached instance without the extension
+        if ((logicalPathWithoutExtension !== null) && (module = instanceCache[logicalPathWithoutExtension]) !== undefined) {
+            // found cached entry based on the logical path without extension
+            return module.exports;
+        }
+    } else {
+        // found cached entry based on the logical path
         return module.exports;
     }
 
-    var logicalPath = resolved.logicalPath;
-    module = new Module(logicalPath);
+    // verifyResolve will throw error if module not found
+    var factoryOrObject = verifyResolve(target, resolved, logicalPathWithoutExtension);
+
+    module = new Module(resolved);
 
     // cache the instance before loading (allows support for circular dependency with partial loading)
-    instanceCache[logicalPath] = module;
+    // NOTE: verifyResolve might change "resolved" array so make sure
+    //       we retrieve logical path from resolved array and not local variable
+    instanceCache[resolved[0]] = module;
 
-    module.load(resolved.realPath);
+    module.load(factoryOrObject);
 
     return module.exports;
 }
@@ -317,11 +423,9 @@ $rmod.run('/src/ui-pages/login/login-page', function(require, exports, module, _
 */
 function run(logicalPath, factory) {
     define(logicalPath, factory);
-
-    var module = new Module(logicalPath);
-    module = new Module(logicalPath);
+    var module = new Module([logicalPath, logicalPath]);
     instanceCache[logicalPath] = module;
-    module.load(logicalPath);
+    module.load(factory);
 }
 
 /*
@@ -336,23 +440,12 @@ var $rmod = {
 };
 
 if (typeof window === 'undefined') {
-    module.exports = {
-        // expose the $rmod for testing the interface that would normally be exposed via the browser window object
-        $rmod: $rmod,
+    $rmod.join = join;
+    $rmod.normalize = normalize;
+    $rmod.require = require;
+    $rmod.resolve = resolve;
 
-        // expose the methods that we implement
-        define: define,
-        registerDependency: registerDependency,
-        resolve: resolve,
-        require: require,
-        run: run,
-
-        // expose normalize for unit testing
-        normalize: normalize,
-
-        // expose join for unit testing
-        join: join
-    };
+    module.exports = $rmod;
 } else {
     window.$rmod = $rmod;
 }
