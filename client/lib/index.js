@@ -19,6 +19,11 @@ var instanceCache = {};
 // this object maps dependency logical path to a specific version (for example, "/$/foo/$/baz" --> "3.0.0")
 var dependencies = {};
 
+// this object maps relative paths to a specific real path
+var mains = {};
+
+var resolved = {};
+
 // temporary variable for referencing a prototype
 var proto;
 
@@ -131,12 +136,23 @@ function versionedDependencyInfo(logicalPath, dependencyId, subpath, dependencyV
     // - logicalPath: The logical path of the module (used for caching instances)
     // - realPath: The real path of the module (used for instantiating new instances via factory)
     // return [logicalPath, realPath]
+    var realPath = '/' + dependencyId + '@' + dependencyVersion + subpath;
+
+    // Is there a "main" mapping for the given rean path?
+    var relativePath = mains[realPath];
+    if (relativePath) {
+        realPath = realPath + '/' + relativePath;
+        logicalPath = logicalPath + subpath + '/' + relativePath;
+    } else {
+        logicalPath = logicalPath + subpath;
+    }
+
     return [
         // logical path:
-        logicalPath + subpath,
+        logicalPath,
 
         // real path:
-        '/' + dependencyId + '@' + dependencyVersion + subpath
+        realPath
     ];
 }
 
@@ -147,22 +163,25 @@ function versionedDependencyInfo(logicalPath, dependencyId, subpath, dependencyV
  * @param {Array} parts an array of parts that presumedly was split on the "/" character.
  */
 function normalizePathParts(parts) {
+
+    // IMPORTANT: It is assumed that parts[0] === "" because this method is used to
+    // join an absolute path to a relative path
     var i;
     var len = 0;
 
     var numParts = parts.length;
 
-    // special handling is needed if input is ["", "."] */
-    var leadingSlash = (numParts > 1) && (parts[0].length === 0);
-
     for (i = 0; i < numParts; i++) {
         var part = parts[i];
-        // ignore parts with just "."
+
         if (part === '.') {
+            // ignore parts with just "."
+            /*
             // if the "." is at end of parts (e.g. ["a", "b", "."]) then trim it off
             if (i === numParts - 1) {
                 //len--;
             }
+            */
         } else if (part === '..') {
             // overwrite the previous item by decrementing length
             len--;
@@ -173,11 +192,19 @@ function normalizePathParts(parts) {
         }
     }
 
-    if ((len === 1) && (parts[0] === '') && leadingSlash) {
+    if (len === 1) {
         // if we end up with just one part that is empty string
         // (which can happen if input is ["", "."]) then return
         // string with just the leading slash
         return '/';
+    } else if (len > 2) {
+        // parts i s
+        // ["", "a", ""]
+        // ["", "a", "b", ""]
+        if (parts[len - 1].length === 0) {
+            // last part is an empty string which would result in trailing slash
+            len--;
+        }
     }
 
     // truncate parts to remove unused
@@ -185,19 +212,16 @@ function normalizePathParts(parts) {
     return parts.join('/');
 }
 
-function normalize(path) {
-    return normalizePathParts(path.split('/'));
-}
-
-function join(first, second) {
-    return normalizePathParts(first.split('/').concat(second.split('/')));
-}
-
 function resolveAbsolute(target) {
     var start = target.lastIndexOf('$');
     if (start === -1) {
+
         // target is something like "/foo/baz"
         // There is no installed module in the path
+        var relativePath;
+        if ((relativePath = mains[target]) !== undefined) {
+            target = target + '/' + relativePath;
+        }
 
         // return [logicalPath, realPath, factoryOrObject]
         return [target, target];
@@ -236,7 +260,14 @@ function resolveAbsolute(target) {
 
     // lookup the version
     var dependencyVersion = dependencies[logicalPath];
-    return dependencyVersion ? versionedDependencyInfo(logicalPath, dependencyId, subpath, dependencyVersion) : null;
+    /* jshint laxbreak:true */
+    return (dependencyVersion === undefined)
+        ? null
+        : versionedDependencyInfo(logicalPath, dependencyId, subpath, dependencyVersion);
+}
+
+function join(from, target) {
+    return normalizePathParts(from.split('/').concat(target.split('/')));
 }
 
 function resolve(target, from) {
@@ -251,7 +282,7 @@ function resolve(target, from) {
     }
 
     if (target.charAt(0) === '/') {
-        return resolveAbsolute(normalize(target));
+        return resolveAbsolute(normalizePathParts(target.split('/')));
     }
 
     var dependencyId;
@@ -385,10 +416,13 @@ function require(target, from) {
     }
 
     var logicalPath = resolved[0];
+    
     var module = instanceCache[logicalPath];
     var logicalPathWithoutExtension;
 
     if (module === undefined) {
+        // only try to look for cached entry based on logical path without extension
+        // if we did already find a "main" file for the real path
         logicalPathWithoutExtension = withoutExtension(logicalPath);
 
         // try to find cached instance without the extension
@@ -428,6 +462,14 @@ function run(logicalPath, factory) {
     module.load(factory);
 }
 
+function resolved(target, from, resolvedLogicalPath) {
+
+}
+
+function registerMain(realPath, relativePath) {
+    mains[realPath] = relativePath;
+}
+
 /*
  * $rmod is the short-hand version that that the transport layer expects
  * to be in the browser window object
@@ -435,13 +477,13 @@ function run(logicalPath, factory) {
 var $rmod = {
     def: define,
     dep: registerDependency,
-    run: run
-    //main: registerMain
+    run: run,
+    main: registerMain,
+    resolved: resolved
 };
 
 if (typeof window === 'undefined') {
     $rmod.join = join;
-    $rmod.normalize = normalize;
     $rmod.require = require;
     $rmod.resolve = resolve;
 

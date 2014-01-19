@@ -3,6 +3,7 @@
 var chai = require('chai');
 chai.Assertion.includeStack = true;
 var expect = chai.expect;
+var assert = chai.assert;
 
 describe('raptor-modules/client' , function() {
 
@@ -239,7 +240,7 @@ describe('raptor-modules/client' , function() {
         done();
     });
 
-    it('provide require function to module', function(done) {
+    it('should provide require function to module', function(done) {
         var clientImpl = require('../lib/index');
 
         clientImpl.def('/app/launch/util', function(require, exports, module, __filename, __dirname) {
@@ -274,7 +275,7 @@ describe('raptor-modules/client' , function() {
         done();
     });
 
-    it('provide require function that has a resolve property', function(done) {
+    it('should provide require function that has a resolve property', function(done) {
 
         var clientImpl = require('../lib/index');
 
@@ -490,48 +491,51 @@ describe('raptor-modules/client' , function() {
         done();
     });
 
-    /*
-    it('should find targets with or without ".js" extension', function(done) {
+    it('should allow main file to be specified for any directory', function(done) {
 
         var clientImpl = require('../lib/index');
 
-        clientImpl.def('/app/launch/util', function(require, exports, module, __filename, __dirname) {
-            module.exports.greeting = 'Hello 0!';
+        var instanceCount = 0;
+
+        clientImpl.def('/app/lib/index', function(require, exports, module, __filename, __dirname) {
+            instanceCount++;
+
+            expect(__dirname).to.equal('/app/lib');
+            expect(__filename).to.equal('/app/lib/index');
+
+            module.exports.greeting = 'Hello!';
         });
 
-        // Suppose original source file was "util.js.js"
-        clientImpl.def('/app/launch/util.js', function(require, exports, module, __filename, __dirname) {
-            module.exports.greeting = 'Hello 1!';
-        });
-
-        clientImpl.def('/app/launch/util.js.js', function(require, exports, module, __filename, __dirname) {
-            module.exports.greeting = 'Hello 2!';
-        });
+        clientImpl.main('/app', 'lib/index');
         
-        // define a module for a given real path
-        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
-            var util0 = require('./util');
-            expect(util.greeting).to.equal('Hello 0!');
+        var resolved = clientImpl.resolve('../../', '/app/lib/launch');
+        expect(resolved[0]).to.equal('/app/lib/index');
 
-            var util0 = require('./util');
-            expect(util.greeting).to.equal('Hello 0!');
+        // define a module for a given real path
+        clientImpl.run('/app/lib/launch', function(require, exports, module, __filename, __dirname) {
+
+            expect(__dirname).to.equal('/app/lib');
+            expect(__filename).to.equal('/app/lib/launch');
+
+            // all of the follow require statements are equivalent to require('/app/lib/index')
+            var app0 = require('../');
+            var app1 = require('/app');
+            var app2 = require('/app/lib/index');
+            var app3 = require('/app/lib/index.js');
+            var app4 = require('./index');
+            var app5 = require('./index.js');
+
+            expect(instanceCount).to.equal(1);
+
+            expect(app0.greeting).to.equal('Hello!');
+
+            assert(app1 === app0 &&
+                   app2 === app0 &&
+                   app3 === app0 &&
+                   app4 === app0 &&
+                   app5 === app0, 'All instances are not equal to each other');
         });
 
-        done();
-    });
-    */
-
-    it('should normalize paths', function(done) {
-        var clientImpl = require('../lib/index');
-        expect(clientImpl.normalize('abc')).to.equal('abc');
-        expect(clientImpl.normalize('./abc')).to.equal('abc');
-        expect(clientImpl.normalize('abc/./def')).to.equal('abc/def');
-        expect(clientImpl.normalize('abc/../def')).to.equal('def');
-        expect(clientImpl.normalize('abc/..')).to.equal('');
-        expect(clientImpl.normalize('/abc/..')).to.equal('/');
-        expect(clientImpl.normalize('/.')).to.equal('/');
-        expect(clientImpl.normalize('')).to.equal('');
-        expect(clientImpl.normalize('/abc/def/.')).to.equal('/abc/def');
         done();
     });
 
@@ -541,6 +545,7 @@ describe('raptor-modules/client' , function() {
         //       or even a "module name" because these are handled specially
         //       in the resolve method.
         var clientImpl = require('../lib/index');
+
         expect(clientImpl.join('/foo/baz', './abc.js')).to.equal('/foo/baz/abc.js');
         expect(clientImpl.join('/foo/baz', '../abc.js')).to.equal('/foo/abc.js');
         expect(clientImpl.join('/foo', '..')).to.equal('/');
@@ -549,6 +554,11 @@ describe('raptor-modules/client' , function() {
         expect(clientImpl.join('foo/bar', '../test.js')).to.equal('foo/test.js');
         expect(clientImpl.join('abc/def', '.')).to.equal('abc/def');
         expect(clientImpl.join('/', '.')).to.equal('/');
+        expect(clientImpl.join('/', '.')).to.equal('/');
+        expect(clientImpl.join('/app/lib/launch', '../../')).to.equal('/app');
+        expect(clientImpl.join('/app/lib/launch', '../..')).to.equal('/app');
+        expect(clientImpl.join('/app/lib/launch', './../..')).to.equal('/app');
+        expect(clientImpl.join('/app/lib/launch', './../.././././')).to.equal('/app');
         done();
     });
 });
