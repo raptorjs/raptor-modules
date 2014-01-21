@@ -16,6 +16,40 @@ describe('raptor-modules/client' , function() {
         done();
     });
 
+    it('should throw error if trying to resolve target that is falsey', function(done) {
+        var clientImpl = require('../lib/index');
+
+        try {
+            clientImpl.resolve('', '/some/module');
+            assert(false, 'Exception should have been thrown');
+        } catch(err) {
+            expect(err.code).to.equal('MODULE_NOT_FOUND');
+        }
+
+        try {
+            clientImpl.resolve(null, '/some/module');
+            assert(false, 'Exception should have been thrown');
+        } catch(err) {
+            expect(err.code).to.equal('MODULE_NOT_FOUND');
+        }
+
+        try {
+            clientImpl.resolve(undefined, '/some/module');
+            assert(false, 'Exception should have been thrown');
+        } catch(err) {
+            expect(err.code).to.equal('MODULE_NOT_FOUND');
+        }
+
+        try {
+            clientImpl.resolve(0, '/some/module');
+            assert(false, 'Exception should have been thrown');
+        } catch(err) {
+            expect(err.code).to.equal('MODULE_NOT_FOUND');
+        }
+
+        done();
+    });
+
     it('should resolve modules using search path', function(done) {
         var clientImpl = require('../lib/index');
 
@@ -44,12 +78,37 @@ describe('raptor-modules/client' , function() {
         expect(resolved[1]).to.equal('/baz@3.0.0/lib/index');
 
         // Code at under "/some/module" doesn't know about baz
-        expect(clientImpl.resolve('baz/lib/index', '/some/module')).to.equal(null);
+        try {
+            clientImpl.resolve('baz/lib/index', '/some/module');
+            assert(false, 'Exception should have been thrown');
+        } catch(err) {
+            expect(err.code).to.equal('MODULE_NOT_FOUND');
+        }
 
         done();
     });
 
-    it('should resolve absolute paths', function(done) {
+    it('should resolve absolute paths not containing installed modules', function(done) {
+        var clientImpl = require('../lib/index');
+
+        var resolved;
+
+        // define a module for a given real path
+        clientImpl.def('/my/app/util', function(require, exports, module, __filename, __dirname) {
+            module.exports.test = true;
+        });
+
+        resolved = clientImpl.resolve(
+            '/my/app/util' /* target is absolute path to specific version of module */,
+            '/my/app/index' /* from is ignored if target is absolute path */);
+
+        expect(resolved[0]).to.equal('/my/app/util');
+        expect(resolved[1]).to.equal('/my/app/util');
+        
+        done();
+    });
+
+    it('should resolve absolute paths containing installed modules', function(done) {
 
         var clientImpl = require('../lib/index');
 
@@ -81,16 +140,11 @@ describe('raptor-modules/client' , function() {
         expect(resolved[0]).to.equal('/baz@3.0.0/lib/index');
         expect(resolved[1]).to.equal('/baz@3.0.0/lib/index');
 
-        // A module further nested under /$/foo should also resolve to the same logical path
-        resolved = clientImpl.resolve('baz', '/$/foo/some/other/module');
-        expect(resolved[0]).to.equal('/$/foo/$/baz');
-        expect(resolved[1]).to.equal('/baz@3.0.0');
-
-        // Without registering "main", "/baz@3.0.0" will not be known
-        resolved = clientImpl.resolve('/baz@3.0.0', '/some/module');
-
-        expect(resolved[1]).to.equal('/baz@3.0.0');
-        expect(resolved[0]).to.equal('/baz@3.0.0');
+        
+        expect(function() {
+            // Without registering "main", "/baz@3.0.0" will not be known
+            resolved = clientImpl.resolve('/baz@3.0.0', '/some/module');
+        }).to.throw(Error);
         
         done();
     });
@@ -508,7 +562,12 @@ describe('raptor-modules/client' , function() {
 
         clientImpl.main('/app', 'lib/index');
         
-        var resolved = clientImpl.resolve('../../', '/app/lib/launch');
+        var resolved;
+
+        resolved = clientImpl.resolve('../../lib/index', '/app/lib/launch');
+        expect(resolved[0]).to.equal('/app/lib/index');
+
+        resolved = clientImpl.resolve('../../', '/app/lib/launch');
         expect(resolved[0]).to.equal('/app/lib/index');
 
         // define a module for a given real path
@@ -538,6 +597,100 @@ describe('raptor-modules/client' , function() {
 
         done();
     });
+
+    it('should allow main file to be specified for a module', function(done) {
+
+        var clientImpl = require('../lib/index');
+
+        var instanceCount = 0;
+
+        clientImpl.def('/streams@1.0.0/lib/index', function(require, exports, module, __filename, __dirname) {
+            instanceCount++;
+
+            expect(__dirname).to.equal('/streams@1.0.0/app/lib');
+            expect(__filename).to.equal('/streams@1.0.0/app/lib/index');
+
+            module.exports.greeting = 'Hello!';
+        });
+
+        clientImpl.main('/streams@1.0.0', 'lib/index');
+
+        clientImpl.dep('', 'streams', '1.0.0');
+
+        // define a module for a given real path
+        clientImpl.run('/app', function(require, exports, module, __filename, __dirname) {
+
+            expect(__dirname).to.equal('');
+            expect(__filename).to.equal('/app');
+
+            expect(require.resolve('streams')).to.equal('/$/streams/lib/index');
+        });
+
+        // define a module for a given real path
+        clientImpl.run('/app/launch', function(require, exports, module, __filename, __dirname) {
+
+            expect(__dirname).to.equal('/app');
+            expect(__filename).to.equal('/app/launch');
+
+            expect(require.resolve('streams')).to.equal('/$/streams/lib/index');
+            expect(require.resolve('streams/lib/index')).to.equal('/$/streams/lib/index');
+        });
+
+        done();
+    });
+
+    /*
+    it('should handle remapping individual files within a module', function(done) {
+        var clientImpl = require('../lib/index');
+
+        clientImpl.def('/streams-browser@1.0.0/lib/ndex', function(require, exports, module, __filename, __dirname) {
+
+            expect(__dirname).to.equal('/streams-browser@1.0.0/lib');
+            expect(__filename).to.equal('/streams-browser@1.0.0/lib/index');
+
+            module.exports = {
+                name: 'browser'
+            };
+        });
+
+        // pre-resolve runtime/lib/index relative to
+        clientImpl.remap('/$/streams/lib/index', '/$/streams/lib/browser/index');
+
+        // require runtime/lib/index before it is remapped
+        var runtime0 = clientImpl.require('streams/lib/index', '/app/lib/index');
+        expect(runtime0.name).to.equal('default');
+
+        
+
+        // require runtime/lib/index before after is remapped
+        var runtime1 = clientImpl.require('/app/lib/index', '/app/lib/browser/index');
+        expect(runtime1.name).to.equal('browser');
+    });
+
+    
+    it('should handle remapping entire modules to shim modules', function(done) {
+        var clientImpl = require('../lib/index');
+
+        clientImpl.def('/streams-browser@1.0.0/lib/ndex', function(require, exports, module, __filename, __dirname) {
+
+            expect(__dirname).to.equal('/streams-browser@1.0.0/lib');
+            expect(__filename).to.equal('/streams-browser@1.0.0/lib/index');
+
+            module.exports = {
+                name: 'browser'
+            };
+        });
+
+        clientImpl.main('')
+        // pre-resolve runtime/lib/index relative to
+        clientImpl.shim('streams', 'streams-browserify');
+
+        // require runtime/lib/index before it is remapped
+        var streams = clientImpl.require('streams/lib/index', '/app/lib/index');
+
+        expect(runtime0.name).to.equal('browser');
+    });
+    */
 
     it('should join relative paths', function(done) {
         // NOTE: Second argument to join should start with "." or "..".
