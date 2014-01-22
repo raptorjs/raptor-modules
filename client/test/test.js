@@ -639,39 +639,49 @@ describe('raptor-modules/client' , function() {
         done();
     });
 
-    /*
-    it('should handle remapping individual files within a module', function(done) {
+    it('should handle remapping individual files', function(done) {
+
         var clientImpl = require('../lib/index');
 
-        clientImpl.def('/streams-browser@1.0.0/lib/ndex', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/universal@1.0.0/lib/index', function(require, exports, module, __filename, __dirname) {
+            module.exports = {
+                name: 'default'
+            };
+        });
 
-            expect(__dirname).to.equal('/streams-browser@1.0.0/lib');
-            expect(__filename).to.equal('/streams-browser@1.0.0/lib/index');
-
+        clientImpl.def('/universal@1.0.0/lib/browser/index', function(require, exports, module, __filename, __dirname) {
             module.exports = {
                 name: 'browser'
             };
         });
 
-        // pre-resolve runtime/lib/index relative to
-        clientImpl.remap('/$/streams/lib/index', '/$/streams/lib/browser/index');
+        clientImpl.main('/universal@1.0.0', 'lib/index');
 
-        // require runtime/lib/index before it is remapped
-        var runtime0 = clientImpl.require('streams/lib/index', '/app/lib/index');
+        clientImpl.dep('', 'universal', '1.0.0');
+
+        // require "universal" before it is remapped
+        var runtime0 = clientImpl.require('universal', '/app/lib');
         expect(runtime0.name).to.equal('default');
+        expect(clientImpl.require('universal/lib/index', '/app/lib')).to.equal(runtime0);
 
-        
+        clientImpl.remap(
+            // choose a specific "file" to remap
+            '/universal@1.0.0/lib/index',
+            // following path is relative to /universal@1.0.0/lib
+            './browser/index');
 
-        // require runtime/lib/index before after is remapped
-        var runtime1 = clientImpl.require('/app/lib/index', '/app/lib/browser/index');
+        // require "universal" after it is remapped
+        var runtime1 = clientImpl.require('universal', '/app/lib');
         expect(runtime1.name).to.equal('browser');
-    });
+        expect(clientImpl.require('universal/lib/index', '/app/lib')).to.equal(runtime1);
 
+        done();
+    });
     
     it('should handle remapping entire modules to shim modules', function(done) {
         var clientImpl = require('../lib/index');
 
-        clientImpl.def('/streams-browser@1.0.0/lib/ndex', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/streams-browser@1.0.0/lib/index', function(require, exports, module, __filename, __dirname) {
 
             expect(__dirname).to.equal('/streams-browser@1.0.0/lib');
             expect(__filename).to.equal('/streams-browser@1.0.0/lib/index');
@@ -681,16 +691,17 @@ describe('raptor-modules/client' , function() {
             };
         });
 
-        clientImpl.main('')
-        // pre-resolve runtime/lib/index relative to
-        clientImpl.shim('streams', 'streams-browserify');
+        clientImpl.remap('streams', 'streams-browser');
 
-        // require runtime/lib/index before it is remapped
+        clientImpl.dep('', 'streams-browser', '1.0.0');
+
+        // requiring "streams" effectively a require on "streams-browser";
         var streams = clientImpl.require('streams/lib/index', '/app/lib/index');
 
-        expect(runtime0.name).to.equal('browser');
+        expect(streams.name).to.equal('browser');
+
+        done();
     });
-    */
 
     it('should join relative paths', function(done) {
         // NOTE: Second argument to join should start with "." or "..".

@@ -23,7 +23,13 @@ https://github.com/joyent/node/blob/master/lib/module.js
     // this object maps relative paths to a specific real path
     var mains = {};
 
+    // used to remap a real path to a new path (keys are real paths and values are relative paths)
     var remapped = {};
+
+    // used to remap a module ID (e.g. "streams" --> "streams-browser")
+    var remappedModules = {};
+
+    var cacheByDirname = {};
 
     // temporary variable for referencing a prototype
     var proto;
@@ -69,8 +75,8 @@ https://github.com/joyent/node/blob/master/lib/module.js
             // find the value for the __filename paramter to factory
             var filename = realPath;
 
-            // local cache for requires initiated from this module
-            var localCache = {};
+            // local cache for requires initiated from this module/dirname
+            var localCache = cacheByDirname[dirname] || (cacheByDirname[dirname] = {});
 
             // this is the require used by the module
             var instanceRequire = function(target) {
@@ -121,8 +127,14 @@ https://github.com/joyent/node/blob/master/lib/module.js
         mains[realPath] = relativePath;
     }
 
-    function resolved(oldLogicalPath, newLogicalPath) {
-        remapped[oldLogicalPath] = newLogicalPath;
+    function remap(realPath, relativePath) {
+        if (realPath.charAt(0) === '/') {
+            remapped[realPath] = relativePath;
+        } else {
+            // realPath is module name
+            // relativePath is target module name
+            remappedModules[realPath] = relativePath;
+        }
     }
 
     function registerDependency(logicalParentPath, dependencyId, dependencyVersion) {
@@ -281,6 +293,11 @@ https://github.com/joyent/node/blob/master/lib/module.js
             subpath = target.substring(pos);
         }
 
+        var remappedDependencyId = remappedModules[dependencyId];
+        if (remappedDependencyId !== undefined) {
+            dependencyId = remappedDependencyId;
+        }
+
         /*
         Consider when the module "baz" (which is a dependency of "foo") requires module "async":
         resolve('async', '/$/foo/$/baz');
@@ -307,29 +324,30 @@ https://github.com/joyent/node/blob/master/lib/module.js
         var end = from.lastIndexOf('/');
 
         // if there is no "/" in the from path then this path is technically invalid (right?)
-        if (end !== -1) {
-            do {
-                var start = from.lastIndexOf('/', end - 1);
-                if (start === -1) {
-                    // reached the start so stop searching
-                    break;
-                }
+        while(end !== -1) {
 
-                // check to see if the substring from [start:end] is '/$/'
-                if ((end - start === 2) && (from.charAt(start + 1) === '$')) {
+            var start = -1;
+
+            // make sure we don't check a logical path that would end with "/$/$/dependencyId"
+            if (end > 0) {
+                start = from.lastIndexOf('/', end - 1);
+                if ((start !== -1) && (end - start === 2) && (from.charAt(start + 1) === '$')) {
+                    // check to see if the substring from [start:end] is '/$/'
                     // skip look at this subpath because it ends with "/$/"
                     end = start;
                     continue;
                 }
+            }
 
-                logicalPath = from.substring(0, end) + '/$/' + dependencyId;
-                dependencyVersion = dependencies[logicalPath];
-                if (dependencyVersion) {
-                    return versionedDependencyInfo(logicalPath, dependencyId, subpath, dependencyVersion);
-                }
+            logicalPath = from.substring(0, end) + '/$/' + dependencyId;
+            dependencyVersion = dependencies[logicalPath];
+            if (dependencyVersion) {
+                return versionedDependencyInfo(logicalPath, dependencyId, subpath, dependencyVersion);
+            } else if (start === -1) {
+                break;
+            }
 
-                end = from.lastIndexOf('/', start - 1);
-            } while(end > 1);
+            end = from.lastIndexOf('/', start - 1);
         }
 
         throw moduleNotFoundError(target);
@@ -369,6 +387,12 @@ https://github.com/joyent/node/blob/master/lib/module.js
             // there is a main file corresponding to the given target to add the relative path
             resolved[0] = logicalPath = logicalPath + '/' + relativePath;
             resolved[1] = realPath = realPath + '/' + relativePath;
+        }
+
+        var newRelativePath = remapped[realPath];
+        if (newRelativePath !== undefined) {
+            resolved[0] = logicalPath = join(logicalPath + '/..', newRelativePath);
+            resolved[1] = realPath = join(realPath + '/..', newRelativePath);
         }
 
         var factoryOrObject = definitions[realPath];
@@ -440,7 +464,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
         dep: registerDependency,
         run: run,
         main: registerMain,
-        resolved: resolved,
+        remap: remap,
         require: require,
         resolve: resolve,
         join: join
