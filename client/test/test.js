@@ -691,9 +691,17 @@ describe('raptor-modules/client' , function() {
             };
         });
 
-        clientImpl.remap('streams', 'streams-browser');
+        clientImpl.dep(
+            // logical path
+            '',
 
-        clientImpl.dep('', 'streams-browser', '1.0.0');
+            // depends on streams-browser 1.0.0
+            'streams-browser', '1.0.0',
+
+            // streams-browser is also known as "streams"
+            'streams');
+
+        //clientImpl.remap('streams', 'streams-browser', '/abc');
 
         // requiring "streams" effectively a require on "streams-browser";
         var streams = clientImpl.require('streams/lib/index', '/app/lib/index');

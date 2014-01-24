@@ -127,18 +127,15 @@ https://github.com/joyent/node/blob/master/lib/module.js
         mains[realPath] = relativePath;
     }
 
-    function remap(realPath, relativePath) {
-        if (realPath.charAt(0) === '/') {
-            remapped[realPath] = relativePath;
-        } else {
-            // realPath is module name
-            // relativePath is target module name
-            remappedModules[realPath] = relativePath;
-        }
+    function remap(oldRealPath, relativePath) {
+        remapped[oldRealPath] = relativePath;
     }
 
-    function registerDependency(logicalParentPath, dependencyId, dependencyVersion) {
-        dependencies[logicalParentPath + '/$/' + dependencyId] =  dependencyVersion;
+    function registerDependency(logicalParentPath, dependencyId, dependencyVersion, dependencyAlsoKnownAs) {
+        dependencies[logicalParentPath + '/$/' + dependencyId] =  [dependencyVersion];
+        if (dependencyAlsoKnownAs !== undefined) {
+            dependencies[logicalParentPath + '/$/' + dependencyAlsoKnownAs] =  [dependencyVersion, dependencyId];
+        }
     }
 
     /**
@@ -271,12 +268,22 @@ https://github.com/joyent/node/blob/master/lib/module.js
         }
 
         // lookup the version
-        var dependencyVersion = dependencies[logicalPath];
+        var dependencyInfo = dependencies[logicalPath];
+        if (dependencyInfo === undefined) {
+            return null;
+        }
 
-        /* jshint laxbreak:true */
-        return (dependencyVersion === undefined)
-            ? null
-            : versionedDependencyInfo(logicalPath, dependencyId, subpath, dependencyVersion);
+        return versionedDependencyInfo(
+            logicalPath,
+
+            // dependencyInfo[1] is the optional remapped dependency ID
+            // (use the actual dependencyID from target if remapped dependency ID is undefined)
+            dependencyInfo[1] || dependencyId,
+
+            subpath,
+
+            // first item
+            dependencyInfo[0]);
     }
 
     function resolveModule(target, from) {
@@ -316,9 +323,19 @@ https://github.com/joyent/node/blob/master/lib/module.js
         // by adding "/$/<target>" to the given "from" path.
         // If the given from is "/$/foo/$/baz" then we will try "/$/foo/$/baz/$/async"
         var logicalPath = from + '/$/' + dependencyId;
-        var dependencyVersion = dependencies[logicalPath];
-        if (dependencyVersion) {
-            return versionedDependencyInfo(logicalPath, dependencyId, subpath, dependencyVersion);
+        var dependencyInfo = dependencies[logicalPath];
+        if (dependencyInfo !== undefined) {
+            return versionedDependencyInfo(
+                logicalPath,
+
+                // dependencyInfo[1] is the optional remapped dependency ID
+                // (use the actual dependencyID from target if remapped dependency ID is undefined)
+                dependencyInfo[1] || dependencyId,
+
+                subpath,
+
+                // dependencyVersion
+                dependencyInfo[0]);
         }
 
         var end = from.lastIndexOf('/');
@@ -340,9 +357,18 @@ https://github.com/joyent/node/blob/master/lib/module.js
             }
 
             logicalPath = from.substring(0, end) + '/$/' + dependencyId;
-            dependencyVersion = dependencies[logicalPath];
-            if (dependencyVersion) {
-                return versionedDependencyInfo(logicalPath, dependencyId, subpath, dependencyVersion);
+            dependencyInfo = dependencies[logicalPath];
+            if (dependencyInfo !== undefined) {
+                return versionedDependencyInfo(
+                    logicalPath,
+
+                    // dependencyInfo[1] is the optional remapped dependency ID
+                    // (use the actual dependencyID from target if remapped dependency ID is undefined)
+                    dependencyInfo[1] || dependencyId,
+
+                    subpath,
+
+                    dependencyInfo[0]);
             } else if (start === -1) {
                 break;
             }
