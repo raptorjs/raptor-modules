@@ -34,9 +34,13 @@ function resolveRequire(target, from) {
             // This top-level module might be mapped to a completely different module
             // based on the module metadata in package.json
             
-            browserOverride = browserOverrides.resolve(target, from);
+            var remappedModule = browserOverrides.getRemappedModuleInfo(target, from);
 
-            if (browserOverride) {
+            if (remappedModule) {
+                // console.log('BROWSER OVERRIDE: ', remappedModule);
+                browserOverride = resolveRequire(remappedModule.name, remappedModule.from);
+                browserOverride.dep.childName = target;
+                browserOverride.dep.remap = remappedModule.name;
                 browserOverride.isBrowserOverride = true;
                 return browserOverride;
             }

@@ -9,6 +9,7 @@ function BrowserOverrides(dirname) {
     this.dirname = dirname;
     this.parent = null;
     this.resolveCache = {};
+    this.targetCache = {};
 }
 
 BrowserOverrides.prototype = {
@@ -32,6 +33,37 @@ BrowserOverrides.prototype = {
                 }    
             }
         }
+    },
+
+    getRemappedModuleInfo: function(requested) {
+        var target = this.targetCache[requested];
+        if (target === undefined) {
+            ok(requested.charAt(0) !== '.' && requested.charAt(0) !== '/', 'Non-relative and non-absolute module path expected. Provided: ' + requested);
+
+            var current = this;
+        
+            while (current) {
+                target = current.overrides[requested];
+                if (target) {
+                    target = {
+                        name: target,
+                        from: current.dirname
+                    };
+
+                    break;
+                }
+
+                current = current.parent;
+            }
+
+            if (!target) {
+                target = null;
+            }
+
+            this.targetCache[requested] = target;
+        }
+
+        return target;
     },
 
     _resolve: function(target) {

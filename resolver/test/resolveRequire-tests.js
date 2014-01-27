@@ -203,16 +203,22 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         var resolver = require('../');
         var from = nodePath.join(__dirname, 'test-project/node_modules/browser-overrides/override-files');
         var pathInfo = resolver.resolveRequire('hello-world', from);
+        // console.log(JSON.stringify(pathInfo, null, '    '));
         expect(pathInfo).to.deep.equal({
 
-            logicalPath: '/$/browser-overrides/$/hello-world-browserify/index',
-            realPath: '/hello-world-browserify@9.9.9/index',
-            filePath: nodePath.join(__dirname, 'test-project/node_modules/browser-overrides/node_modules/hello-world-browserify/index.js'),
-            isDir: false,
+            logicalPath: '/$/browser-overrides/$/hello-world-browserify',
+            realPath: '/hello-world-browserify@9.9.9',
+            filePath: nodePath.join(__dirname, 'test-project/node_modules/browser-overrides/node_modules/hello-world-browserify'),
+            isDir: true,
+            main: {
+                filePath: nodePath.join(__dirname, 'test-project/node_modules/browser-overrides/node_modules/hello-world-browserify/index.js'),
+                path: 'index'
+            },
             dep: {
                 parentPath: '/$/browser-overrides',
-                childName: 'hello-world-browserify',
-                childVersion: '9.9.9'
+                childName: 'hello-world',
+                childVersion: '9.9.9',
+                remap: 'hello-world-browserify'
             },
             isBrowserOverride: true
         });
