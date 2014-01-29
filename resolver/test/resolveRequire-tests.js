@@ -78,31 +78,13 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
     });
 
 
-    it('should handle browser override for main script', function() {
-        require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));
-        var resolver = require('../');
-        var from = nodePath.join(__dirname, 'test-project/src');
-        var pathInfo = resolver.resolveRequire('browser-overrides/main', from);
-        expect(pathInfo).to.deep.equal({
-
-            logicalPath: '/$/browser-overrides/main/browser/index_browser',
-            realPath: '/browser-overrides@0.0.0/main/browser/index_browser',
-            filePath: nodePath.join(__dirname, 'test-project/node_modules/browser-overrides/main/browser/index_browser.js'),
-            isDir: false,
-            dep: {
-                parentPath: '',
-                childName: 'browser-overrides',
-                childVersion: '0.0.0'
-            },
-            isBrowserOverride: true
-        });
-    });
+    
 
     it('should handle browser override for main script in a sub-module', function() {
         require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));
         var resolver = require('../');
         var from = nodePath.join(__dirname, 'test-project/src');
-        var pathInfo = resolver.resolveRequire('browser-overrides/main/sub', from);
+        var pathInfo = resolver.resolveRequire('browser-overrides/main/sub/sub', from);
         expect(pathInfo).to.deep.equal({
 
             logicalPath: '/$/browser-overrides/main/sub/sub_browser',
@@ -113,6 +95,10 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
                 parentPath: '',
                 childName: 'browser-overrides',
                 childVersion: '0.0.0'
+            },
+            remap: {
+                from: '/browser-overrides@0.0.0/main/sub/sub',
+                to: 'sub_browser'
             },
             isBrowserOverride: true
         });
@@ -125,16 +111,19 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         var pathInfo = resolver.resolveRequire('browser-overrides/override-files', from);
         expect(pathInfo).to.deep.equal({
 
-            logicalPath: '/$/browser-overrides/override-files/index_browser',
-            realPath: '/browser-overrides@0.0.0/override-files/index_browser',
-            filePath: nodePath.join(__dirname, 'test-project/node_modules/browser-overrides/override-files/index_browser.js'),
-            isDir: false,
+            logicalPath: '/$/browser-overrides/override-files',
+            realPath: '/browser-overrides@0.0.0/override-files',
+            filePath: nodePath.join(__dirname, 'test-project/node_modules/browser-overrides/override-files'),
+            isDir: true,
             dep: {
                 parentPath: '',
                 childName: 'browser-overrides',
                 childVersion: '0.0.0'
             },
-            isBrowserOverride: true
+            main: {
+                filePath: nodePath.join(__dirname, 'test-project/node_modules/browser-overrides/override-files/index.js'),
+                path: 'index'
+            }
         });
     });
 
@@ -153,6 +142,10 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
                 parentPath: '',
                 childName: 'browser-overrides',
                 childVersion: '0.0.0'
+            },
+            remap: {
+                from: "/browser-overrides@0.0.0/override-files/hello",
+                to: "hello_browser"
             },
             isBrowserOverride: true
         });
@@ -174,6 +167,10 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
                 childName: 'browser-overrides',
                 childVersion: '0.0.0'
             },
+            remap: {
+                from: '/browser-overrides@0.0.0/override-files/hello/world',
+                to: 'world_browser',
+            },
             isBrowserOverride: true
         });
     });
@@ -193,6 +190,10 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
                 parentPath: '/$/browser-overrides',
                 childName: 'hello-world-browserify',
                 childVersion: '9.9.9'
+            },
+            remap: {
+                from: '/browser-overrides@0.0.0/override-files/hello-world',
+                to: '../$/hello-world-browserify/index'
             },
             isBrowserOverride: true
         });

@@ -3,8 +3,10 @@ var ok = require('assert').ok;
 
 var fs = require('fs');
 var raptorModulesUtil = require('../../util');
+var raptorModulesResolver = require('../../resolver');
 var getProjectRootDir = raptorModulesUtil.getProjectRootDir;
 var findMain = raptorModulesUtil.findMain;
+var getBrowserOverrides = require('./browser-overrides').getBrowserOverrides;
 
 function normalizeDepDirnames(path) {
     var parts = path.split('/');
@@ -75,6 +77,7 @@ function getPathInfo(path, options) {
 
     var isDir = stat.isDirectory();
     var main;
+    var remap;
 
     if (isDir) {
         var mainFilePath = findMain(path);
@@ -86,9 +89,50 @@ function getPathInfo(path, options) {
             };    
         }
     } else {
+
         if (removeExt) {
             logicalPath = removeRegisteredExt(logicalPath);
             realPath = removeRegisteredExt(realPath);
+        }
+
+        var dirname = nodePath.dirname(path);
+
+        var browserOverrides = getBrowserOverrides(dirname);
+        if (browserOverrides) {
+            var browserOverride = browserOverrides.getRemappedModuleInfo(path);
+
+            if (browserOverride) {
+                var overridePathInfo;
+                var targetFile;
+
+                if (browserOverride.filePath) {
+                    targetFile = browserOverride.filePath;
+                    
+                } else if (browserOverride.name) {
+                    ok(browserOverride.from, 'browserOverride.from expected');
+
+                    var targetModule = raptorModulesResolver.resolveRequire(browserOverride.name, browserOverride.from);
+                    ok(targetModule.main && targetModule.main.filePath, 'Invalid target module');
+                    targetFile = targetModule.main.filePath;
+
+                } else {
+                    throw new Error('Invalid browser override for "' + path + '": ' + require('util').inspect(path));
+                }
+
+                var remapTo = normalizeDepDirnames(nodePath.relative(dirname, targetFile));
+
+                remap = {
+                    from: realPath,
+                    to: removeExt ? removeRegisteredExt(remapTo) : remapTo
+                };
+
+                ok(targetFile, 'targetFile is null');
+
+                overridePathInfo = getPathInfo(targetFile);
+                overridePathInfo.isBrowserOverride = true;
+                overridePathInfo.remap = remap;
+                return overridePathInfo;
+            }
         }
     }
 

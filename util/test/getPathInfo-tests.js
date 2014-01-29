@@ -120,6 +120,28 @@ describe('raptor-modules/util.getPathInfo' , function() {
         });
     });
 
+    it('should handle browser override for main script', function() {
+        require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));
+        var resolver = require('../');
+        var pathInfo = resolver.getPathInfo(nodePath.join(__dirname, 'test-project/node_modules/browser-overrides/main/index.js'));
+        expect(pathInfo).to.deep.equal({
+            remap: {
+                from: '/browser-overrides@0.0.0/main/index',
+                to: 'browser/index_browser'
+            },
+            logicalPath: '/$/browser-overrides/main/browser/index_browser',
+            realPath: '/browser-overrides@0.0.0/main/browser/index_browser',
+            filePath: nodePath.join(__dirname, 'test-project/node_modules/browser-overrides/main/browser/index_browser.js'),
+            isDir: false,
+            dep: {
+                parentPath: '',
+                childName: 'browser-overrides',
+                childVersion: '0.0.0'
+            },
+            isBrowserOverride: true
+        });
+    });
+
 
 });
 

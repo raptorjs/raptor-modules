@@ -2,6 +2,8 @@ var ok = require('assert').ok;
 var nodePath = require('path');
 var tryPackage = require('../../util').tryPackage;
 var findMain = require('../../util').findMain;
+var resolver = require('../../resolver');
+
 var browserOverridesByDir = {};
 
 function BrowserOverrides(dirname) {
@@ -24,12 +26,13 @@ BrowserOverrides.prototype = {
             else {
                 for (var source in pkg.browser) {
                     var resolvedSource = source;
+                    var target = pkg.browser[source];
 
                     if (source.startsWith('./')) {
                         resolvedSource = nodePath.join(this.dirname, source);
                     }
 
-                    this.overrides[resolvedSource] = pkg.browser[source];
+                    this.overrides[resolvedSource] = target;
                 }    
             }
         }
@@ -38,17 +41,24 @@ BrowserOverrides.prototype = {
     getRemappedModuleInfo: function(requested) {
         var target = this.targetCache[requested];
         if (target === undefined) {
-            ok(requested.charAt(0) !== '.' && requested.charAt(0) !== '/', 'Non-relative and non-absolute module path expected. Provided: ' + requested);
 
             var current = this;
-        
+            
             while (current) {
                 target = current.overrides[requested];
                 if (target) {
-                    target = {
-                        name: target,
-                        from: current.dirname
-                    };
+
+                    if (target.startsWith('.')) {
+                        var resolved = resolver.resolveRequire(target, current.dirname);
+                        target = {
+                            filePath: resolved.filePath
+                        };
+                    } else {
+                        target = {
+                            name: target,
+                            from: current.dirname
+                        };    
+                    }
 
                     break;
                 }
@@ -59,49 +69,12 @@ BrowserOverrides.prototype = {
             if (!target) {
                 target = null;
             }
+            
 
             this.targetCache[requested] = target;
         }
 
         return target;
-    },
-
-    _resolve: function(target) {
-        ok(target, '"target" is required');
-
-        var resolved = this.resolveCache[target];
-
-        if (resolved === undefined) {
-            var resolveRequire = require('./resolveRequire');
-
-            resolved = resolveRequire(
-                target,
-                this.dirname);
-
-            while (resolved && resolved.isDir) {
-                var main = findMain(resolved.filePath);
-                resolved = resolveRequire(main, nodePath.dirname(main));
-            }
-
-            this.resolveCache[target] = resolved || null;
-        }
-
-        return resolved;
-    },
-
-    resolve: function(target) {
-        var override = this.overrides[target];
-        if (override) {
-            return this._resolve(override);
-        }
-        else {
-            if (this.parent) {
-                return this.parent.resolve(target);
-            }
-            else {
-                return null;
-            }
-        }
     }
 };
 

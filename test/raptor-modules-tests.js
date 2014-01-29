@@ -19,13 +19,13 @@ describe('raptor-modules' , function() {
         done();
     });
 
-    it('should allow a module to be conditionally required', function() {
-        var raptorModules = require('../');
-        var test = raptorModules.conditionalRequire('./test', require);
-        expect(test.test).to.equal(true);
-        var missing = raptorModules.conditionalRequire('./missing', require);
-        expect(missing).to.equal(undefined);
-    });
+    // it('should allow a module to be conditionally required', function() {
+    //     var raptorModules = require('../');
+    //     var test = raptorModules.conditionalRequire('./test', require);
+    //     expect(test.test).to.equal(true);
+    //     var missing = raptorModules.conditionalRequire('./missing', require);
+    //     expect(missing).to.equal(undefined);
+    // });
 
 
 });

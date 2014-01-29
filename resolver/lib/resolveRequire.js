@@ -3,9 +3,7 @@ var ok = require('assert').ok;
 var fs = require('fs');
 var nodePath = require('path');
 var resolver = require('../../resolver');
-var findMain = require('../../util').findMain;
-var getPathInfo = require('../../util').getPathInfo;
-var browserResolve = require('./browser-resolve');
+var moduleUtil = require('../../util');
 
 function resolveRequire(target, from) {
     ok(target, '"target" is required');
@@ -24,9 +22,8 @@ function resolveRequire(target, from) {
         stat = null;
     }
 
-    var browserOverrides = browserResolve.getBrowserOverrides(from);
+    var browserOverrides = moduleUtil.getBrowserOverrides(from);
     var browserOverride;
-    var isBrowserOverride = false;
 
     if (!resolvedPath) {
 
@@ -67,35 +64,7 @@ function resolveRequire(target, from) {
     }
     
     if (resolvedPath) {
-        stat = stat || fs.statSync(resolvedPath);
-        if (stat.isDirectory()) {
-            var main = findMain(resolvedPath);
-
-            browserOverrides = browserResolve.getBrowserOverrides(resolvedPath);
-            if (browserOverrides) {
-                browserOverride = browserOverrides.resolve(main);
-                if (browserOverride) {
-                    browserOverride.isBrowserOverride = true;
-                    return browserOverride;
-                }
-            }
-        }
-        else {
-            browserOverrides = browserResolve.getBrowserOverrides(nodePath.dirname(resolvedPath));
-            if (browserOverrides) {
-                browserOverride = browserOverrides.resolve(resolvedPath);
-                if (browserOverride) {
-                    browserOverride.isBrowserOverride = true;
-                    return browserOverride;
-                }
-            }
-        }
-
-        var pathInfo = getPathInfo(resolvedPath);
-        if (isBrowserOverride) {
-            pathInfo.browserOverride = true;
-        }
-
+        var pathInfo = moduleUtil.getPathInfo(resolvedPath);
         return pathInfo;
     }
     else {
