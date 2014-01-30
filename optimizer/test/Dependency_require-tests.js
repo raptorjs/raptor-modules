@@ -20,7 +20,7 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
         done();
     });
 
-    it('should resolve to the the correct optimizer manifest for a "require" dependency that resolves to a root module', function(done) {
+    it('should resolve to the correct optimizer manifest for a "require" dependency that resolves to a root module', function(done) {
 
 
         var requireDependency = require('../lib/Dependency_require');
@@ -60,7 +60,7 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
             .fail(done);
     });
 
-    it('should resolve to the the correct optimizer manifest for a "require" dependency with a resolved path', function(done) {
+    it('should resolve to the correct optimizer manifest for a "require" dependency with a resolved path', function(done) {
 
         var requireDependency = require('../lib/Dependency_require');
         requireDependency.resolvedPath = nodePath.join(__dirname, 'test-project/node_modules/bar/lib/index.js');
@@ -108,7 +108,7 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
             .fail(done);
     });
 
-    it('should resolve to the the correct optimizer manifest for a "require" dependency that resolves to a nested installed module', function(done) {
+    it('should resolve to the correct optimizer manifest for a "require" dependency that resolves to a nested installed module', function(done) {
 
         var requireDependency = require('../lib/Dependency_require');
         requireDependency.path = "baz";
@@ -148,7 +148,7 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
 
     });
 
-    it('should resolve to the the correct optimizer manifest for a "require" dependency with a resolved path and a non-string require in code', function(done) {
+    it('should resolve to the correct optimizer manifest for a "require" dependency with a resolved path and a non-string require in code', function(done) {
 
         var requireDependency = require('../lib/Dependency_require');
         requireDependency.resolvedPath = nodePath.join(__dirname, 'test-project/node_modules/foo/lib/index.js');
@@ -184,6 +184,81 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
                 });
 
                 expect(requires.length).to.equal(0);
+
+                done();
+            })
+            .fail(done);
+    });
+
+    it('should resolve to the correct optimizer manifest for a "require" dependency that has a browser module override', function(done) {
+        var requireDependency = require('../lib/Dependency_require');
+        requireDependency.path = "hello-world";
+        requireDependency.from = nodePath.join(__dirname, 'test-project/browser-overrides/main');
+        requireDependency.init();
+
+        requireDependency.getDependencies()
+            .then(function(dependencies) {
+                var lookup = {};
+
+                expect(dependencies.length).to.equal(3);
+
+                dependencies.forEach(function(d) {
+                    lookup[d.type] = d;
+                });
+
+                expect(lookup['commonjs-dep']).to.deep.equal({
+                    type: 'commonjs-dep',
+                    parentPath: '/browser-overrides',
+                    childName: 'hello-world',
+                    childVersion: '9.9.9',
+                    remap: 'hello-world-browserify'
+                });
+
+                expect(lookup['commonjs-main']).to.deep.equal({
+                    type: 'commonjs-main',
+                    dir: '/hello-world-browserify@9.9.9',
+                    main: 'index'
+                });
+
+                expect(lookup.require).to.deep.equal({
+                    type: 'require',
+                    resolvedPath: nodePath.join(__dirname, 'test-project/browser-overrides/node_modules/hello-world-browserify/index.js')
+                });
+
+                done();
+            })
+            .fail(done);
+    });
+
+    it('should resolve to the correct optimizer manifest for a "require" dependency that has a browser file override', function(done) {
+        var requireDependency = require('../lib/Dependency_require');
+        requireDependency.path = "./browser-overrides/main/index";
+        requireDependency.from = nodePath.join(__dirname, 'test-project');
+        requireDependency.init();
+
+        requireDependency.getDependencies()
+            .then(function(dependencies) {
+                var lookup = {};
+
+                // console.log('DEPENDENCIES: ', dependencies);
+
+                expect(dependencies.length).to.equal(2);
+
+                dependencies.forEach(function(d) {
+                    lookup[d.type] = d;
+                });
+
+                expect(lookup['commonjs-def']).to.deep.equal({
+                    type: 'commonjs-def',
+                    path: '/browser-overrides/main/browser/index_browser',
+                    _file: nodePath.join(__dirname, 'test-project/browser-overrides/main/browser/index_browser.js')
+                });
+
+                expect(lookup['commonjs-remap']).to.deep.equal({
+                    type: 'commonjs-remap',
+                    from: '/browser-overrides/main/index',
+                    to: 'browser/index_browser'
+                });
 
                 done();
             })

@@ -6,7 +6,8 @@ function registerDependencyTypes(optimizer) {
     optimizer.dependencies.registerJavaScriptType('commonjs-def', require('./Dependency_commonjs-def'));
     optimizer.dependencies.registerJavaScriptType('commonjs-run', require('./Dependency_commonjs-run'));
     optimizer.dependencies.registerJavaScriptType('commonjs-dep', require('./Dependency_commonjs-dep'));
-    optimizer.dependencies.registerJavaScriptType('commonjs-main', require('./Dependency_commonjs-main'));    
+    optimizer.dependencies.registerJavaScriptType('commonjs-main', require('./Dependency_commonjs-main'));
+    optimizer.dependencies.registerJavaScriptType('commonjs-remap', require('./Dependency_commonjs-remap'));
     optimizer.dependencies.registerJavaScriptType('commonjs-resolved', require('./Dependency_commonjs-resolved'));
     optimizer.dependencies.addNormalizer(function(dependency) {
         if (typeof dependency === 'string') {

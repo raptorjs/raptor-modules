@@ -45,5 +45,18 @@ describe('raptor-modules/transport.registerDependencyCode' , function() {
             done();
         });
     });
+
+    it('should generate correct dependency code for dependency with an alternate name', function(done) {
+        var transport = require('../');
+        var out = transport.registerDependencyCode('', 'foo', '1.0.0', 'foo-browserify');
+        var code = '';
+        out.on('data', function(data) {
+            code += data;
+        });
+        out.on('end', function() {
+            expect(code).to.equal('$rmod.dep("", "foo", "1.0.0", "foo-browserify");');
+            done();
+        });
+    });
 });
 

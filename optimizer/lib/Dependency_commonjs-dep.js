@@ -4,7 +4,8 @@ module.exports = {
     properties: {
         'parentPath': 'string',
         'childName': 'string',
-        'childVersion': 'string'
+        'childVersion': 'string',
+        'remap': 'string'
     },
     
     getDir: function() {
@@ -15,7 +16,8 @@ module.exports = {
         return transport.registerDependencyCode(
             this.parentPath,
             this.childName,
-            this.childVersion);
+            this.childVersion,
+            this.remap);
     },
 
     lastModified: function() {

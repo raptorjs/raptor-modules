@@ -1,6 +1,7 @@
 var nodePath = require('path');
 var getPathInfo = require('../../util').getPathInfo;
 var resolveRequire = require('../../resolver').resolveRequire;
+var extend = require('raptor-util').extend;
 
 var detective = require('detective');
 var fs = require('fs');
@@ -73,14 +74,12 @@ module.exports = {
                 var dependencies = [];
                 var dep = resolved.dep;
                 var main = resolved.main;
+                var remap = resolved.remap;
 
                 if (dep) {
-                    dependencies.push({
-                        type: 'commonjs-dep',
-                        parentPath: dep.parentPath,
-                        childName: dep.childName,
-                        childVersion: dep.childVersion
-                    });
+                    dependencies.push(extend({
+                        type: 'commonjs-dep'
+                    }, dep));
                 }
 
                 if (main) {
@@ -124,6 +123,12 @@ module.exports = {
                             _file: resolved.filePath
                         });   
                     }
+                }
+
+                if (remap) {
+                    dependencies.push(extend({
+                        type: 'commonjs-remap'
+                    }, remap));
                 }
 
                 return dependencies;
