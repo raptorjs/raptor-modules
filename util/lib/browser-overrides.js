@@ -17,16 +17,17 @@ function BrowserOverrides(dirname) {
 BrowserOverrides.prototype = {
     load: function(pkg) {
         this.dirname = pkg.__dirname;
+        var browser = pkg.browser || pkg.browserify;
 
-        if (pkg.browser) {
-            if (typeof pkg.browser === 'string') {
+        if (browser) {
+            if (typeof browser === 'string') {
                 var defaultMain = findMain(this.dirname);
-                this.overrides[defaultMain] = pkg.browser;
+                this.overrides[defaultMain] = browser;
             }
             else {
-                for (var source in pkg.browser) {
+                for (var source in browser) {
                     var resolvedSource = source;
-                    var target = pkg.browser[source];
+                    var target = browser[source];
 
                     if (source.startsWith('./')) {
                         resolvedSource = nodePath.join(this.dirname, source);
