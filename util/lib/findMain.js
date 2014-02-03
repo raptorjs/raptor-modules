@@ -1,7 +1,7 @@
 var fs = require('fs');
 var nodePath = require('path');
 var packageReader = require('./package-reader');
-var raptorModulesUtil = require('./index');
+var ok = require('assert').ok;
 
 function findMainForFilename(dir, main) {
     var filenames = fs.readdirSync(dir);
@@ -25,6 +25,8 @@ function findMainForFilename(dir, main) {
 }
 
 function findMain(path) {
+    ok(typeof path === 'string', 'path should be a string');
+
     var packagePath = nodePath.join(path, 'package.json');
     var main;
     var pkg = packageReader.tryPackage(packagePath);
