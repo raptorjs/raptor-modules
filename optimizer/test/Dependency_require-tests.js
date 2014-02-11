@@ -265,6 +265,70 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
             .fail(done);
     });
 
+    it('should resolve to the correct optimizer manifest for a "require" dependency that has an associated -optimizer.json', function(done) {
+        var requireDependency = require('../lib/Dependency_require');
+        requireDependency.path = "./src/with-package/foo/index";
+        requireDependency.from = nodePath.join(__dirname, 'test-project');
+        requireDependency.init();
+
+        requireDependency.getDependencies()
+            .then(function(dependencies) {
+                var lookup = {};
+
+                expect(dependencies.length).to.equal(2);
+
+                dependencies.forEach(function(d) {
+                    lookup[d.type] = d;
+                });
+
+                expect(lookup['package']).to.deep.equal({
+                    type: 'package',
+                    path: nodePath.join(__dirname, 'test-project/src/with-package/foo/optimizer.json')
+                });
+
+                expect(lookup['commonjs-def']).to.deep.equal({
+                    type: 'commonjs-def',
+                    path: '/src/with-package/foo/index',
+                    _file: nodePath.join(__dirname, 'test-project/src/with-package/foo/index.js')
+                });
+
+                done();
+            })
+            .fail(done);
+    });
+
+    it('should resolve to the correct optimizer manifest for a "require" dependency that has an associated optimizer.json in dir', function(done) {
+        var requireDependency = require('../lib/Dependency_require');
+        requireDependency.path = "./src/with-package/bar/index";
+        requireDependency.from = nodePath.join(__dirname, 'test-project');
+        requireDependency.init();
+
+        requireDependency.getDependencies()
+            .then(function(dependencies) {
+                var lookup = {};
+
+                expect(dependencies.length).to.equal(2);
+
+                dependencies.forEach(function(d) {
+                    lookup[d.type] = d;
+                });
+
+                expect(lookup['package']).to.deep.equal({
+                    type: 'package',
+                    path: nodePath.join(__dirname, 'test-project/src/with-package/bar/index-optimizer.json')
+                });
+
+                expect(lookup['commonjs-def']).to.deep.equal({
+                    type: 'commonjs-def',
+                    path: '/src/with-package/bar/index',
+                    _file: nodePath.join(__dirname, 'test-project/src/with-package/bar/index.js')
+                });
+
+                done();
+            })
+            .fail(done);
+    });
+
     
 
 });

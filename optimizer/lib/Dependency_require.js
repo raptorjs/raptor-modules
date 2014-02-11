@@ -93,8 +93,7 @@ module.exports = {
                         type: 'require',
                         resolvedPath: main.filePath
                     });
-                }
-                else {
+                } else {
 
                     // Include all additional dependencies
                     if (requires) {
@@ -109,6 +108,25 @@ module.exports = {
                         });
                     }
 
+                    // Check if the required file has an "-optimizer.json" associated with it
+                    var ext = nodePath.extname(resolved.filePath);
+                    var optimizerJsonPath = resolved.filePath.slice(0, 0-ext.length) + '-optimizer.json';
+                    if (fs.existsSync(optimizerJsonPath)) {
+                        dependencies.push({
+                            type: 'package',
+                            path: optimizerJsonPath
+                        });
+                    }
+
+                    // Also check if the directory has an optimizer.json and if so we should include that as well
+                    optimizerJsonPath = nodePath.join(nodePath.dirname(resolved.filePath), 'optimizer.json');
+                    if (fs.existsSync(optimizerJsonPath)) {
+                        dependencies.push({
+                            type: 'package',
+                            path: optimizerJsonPath
+                        });
+                    }
+                    
                     if (this.run) {
                         dependencies.push({
                             type: 'commonjs-run',
