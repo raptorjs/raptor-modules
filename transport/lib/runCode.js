@@ -1,5 +1,9 @@
 var resumer = require('resumer');
 
+var part0 = '$rmod.run(';
+var part1 = ', function(require, exports, module, __filename, __dirname) { ';
+var part2 = ' });';
+
 function runCode(logicalPath, code) {
     if (!code) {
         throw new Error('"code" argument is required');
@@ -17,18 +21,21 @@ function runCode(logicalPath, code) {
     }
 
     var out = resumer();
-    out.write('$rmod.run(' + JSON.stringify(logicalPath) + ', ');
-    out.write('function(require, exports, module, __filename, __dirname) { ');
-    
+    out.write(part0);
+    out.write(JSON.stringify(logicalPath));
+    out.write(part1);
     stream.pipe(out, { end: false });
 
     stream.on('end', function() {
-        out.write(' }'); // End the function wrapper
-        out.write(');'); // End the function call
+        out.write(part2);
         out.end();
     });
 
     return out;
 }
 
-module.exports = runCode;
+module.exports = exports = runCode;
+
+exports.sync = function(logicalPath, code) {
+    return part0 + JSON.stringify(logicalPath) + part1 + code + part2;
+};
