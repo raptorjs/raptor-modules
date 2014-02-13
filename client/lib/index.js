@@ -17,7 +17,13 @@ https://github.com/joyent/node/blob/master/lib/module.js
     // this object stores the Module instance cache with the keys being logical paths of modules (e.g., "/$/foo/$/baz" --> Module)
     var instanceCache = {};
 
-    // this object maps dependency logical path to a specific version (for example, "/$/foo/$/baz" --> "3.0.0")
+    // this object maps dependency logical path to a specific version (for example, "/$/foo/$/baz" --> ["3.0.0"])
+    // Each entry in the object is an array. The first item of the array is the version number of the dependency.
+    // The second item of the array (if present), is the real dependency ID if the entry belongs to a remapping rule.
+    // For example, with a remapping, an entry might look like:
+    //      "/$/streams" => ["3.0.0", "streams-browser"]
+    // An example with no remapping:
+    //      "/$/streams" => ["3.0.0"]
     var dependencies = {};
 
     // this object maps relative paths to a specific real path
@@ -25,9 +31,6 @@ https://github.com/joyent/node/blob/master/lib/module.js
 
     // used to remap a real path to a new path (keys are real paths and values are relative paths)
     var remapped = {};
-
-    // used to remap a module ID (e.g. "streams" --> "streams-browser")
-    var remappedModules = {};
 
     var cacheByDirname = {};
 
@@ -221,20 +224,20 @@ https://github.com/joyent/node/blob/master/lib/module.js
         // Our internal module resolver will return an array with the following properties:
         // - logicalPath: The logical path of the module (used for caching instances)
         // - realPath: The real path of the module (used for instantiating new instances via factory)
-        // return [logicalPath, realPath, factoryOrObject]
         var realPath = '/' + dependencyId + '@' + dependencyVersion + subpath;
         logicalPath = logicalPath + subpath;
+
+        // return [logicalPath, realPath, factoryOrObject]
         return [logicalPath, realPath, undefined];
     }
 
-    function resolveAbsolute(target) {
+    function resolveAbsolute(target, origTarget) {
         var start = target.lastIndexOf('$');
         if (start === -1) {
             // return [logicalPath, realPath, factoryOrObject]
             return [target, target, undefined];
         }
 
-        // TODO: Should we handle absolute paths with "$"???
         // target is something like "/$/foo/$/baz/lib/index"
         // In this example we need to find what version of "baz" foo requires
 
@@ -270,7 +273,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
         // lookup the version
         var dependencyInfo = dependencies[logicalPath];
         if (dependencyInfo === undefined) {
-            return null;
+            throw moduleNotFoundError(origTarget || target);
         }
 
         return versionedDependencyInfo(
@@ -282,7 +285,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
 
             subpath,
 
-            // first item
+            // first item is version number
             dependencyInfo[0]);
     }
 
@@ -298,11 +301,6 @@ https://github.com/joyent/node/blob/master/lib/module.js
             // When we're resolving a module, we don't care about the subpath at first
             dependencyId = target.substring(0, pos);
             subpath = target.substring(pos);
-        }
-
-        var remappedDependencyId = remappedModules[dependencyId];
-        if (remappedDependencyId !== undefined) {
-            dependencyId = remappedDependencyId;
         }
 
         /*
@@ -368,6 +366,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
 
                     subpath,
 
+                    // version number
                     dependencyInfo[0]);
             } else if (start === -1) {
                 break;
@@ -388,7 +387,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
         var resolved;
         if (target.charAt(0) === '.') {
             // turn relative path into absolute path
-            resolved = resolveAbsolute(join(from, target));
+            resolved = resolveAbsolute(join(from, target), target);
         } else if (target.charAt(0) === '/') {
             // handle targets such as "/my/file" or "/$/foo/$/baz"
             resolved = resolveAbsolute(normalizePathParts(target.split('/')));
@@ -406,10 +405,6 @@ https://github.com/joyent/node/blob/master/lib/module.js
 
         // check to see if "target" is a "directory" which has a registered main file
         if ((relativePath = mains[realPath]) !== undefined) {
-            // TODO: Will relative path not have leading slash?
-            // NOTE: I would prefer that relativePath always have leading slash
-            //       so might want to change that in transport layer
-            
             // there is a main file corresponding to the given target to add the relative path
             resolved[0] = logicalPath = logicalPath + '/' + relativePath;
             resolved[1] = realPath = realPath + '/' + relativePath;
