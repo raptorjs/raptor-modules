@@ -76,6 +76,11 @@ module.exports = {
                 var main = resolved.main;
                 var remap = resolved.remap;
 
+                dependencies.push({
+                    type: 'package',
+                    path: nodePath.join(__dirname, '../../client/optimizer.json')
+                });
+
                 if (dep) {
                     dependencies.push(extend({
                         type: 'commonjs-dep'
