@@ -2,7 +2,7 @@ require('raptor-ecma/es6');
 var ok = require('assert').ok;
 var fs = require('fs');
 var nodePath = require('path');
-var resolver = require('../../resolver');
+var searchPath = require('./search-path');
 var moduleUtil = require('../../util');
 
 function resolveRequire(target, from) {
@@ -12,16 +12,18 @@ function resolveRequire(target, from) {
     var resolvedPath;
     var stat;
 
-    try {
-        stat = fs.statSync(target);
-        resolvedPath = target;
-        // We need "from" to be accurate for looking up browser overrides:
-        from = stat.isDirectory() ? resolvedPath : nodePath.dirname(resolvedPath);
+    if (target.charAt(0) === '/' || target.indexOf(':/') !== -1) {
+        try {
+            stat = fs.statSync(target);
+            resolvedPath = target;
+            // We need "from" to be accurate for looking up browser overrides:
+            from = stat.isDirectory() ? resolvedPath : nodePath.dirname(resolvedPath);
+        }
+        catch(e) {
+            stat = null;
+        }
     }
-    catch(e) {
-        stat = null;
-    }
-
+    
     var browserOverrides = moduleUtil.getBrowserOverrides(from);
     var browserOverride;
 
@@ -43,7 +45,7 @@ function resolveRequire(target, from) {
             }
         }
 
-        resolvedPath = resolver.find(target, from, function(path) {
+        resolvedPath = searchPath.find(target, from, function(path) {
             // Try with the extensions
             var extensions = require.extensions;
             for (var ext in extensions) {
