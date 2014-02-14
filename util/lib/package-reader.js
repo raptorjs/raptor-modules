@@ -10,8 +10,14 @@ function tryPackage(path) {
 
     try {
         pkg = require(path);
+        
+        if (pkg.__filename && pkg.__filename !== path) {
+            pkg = require('raptor-util').extend({}, pkg);
+        }
+
         pkg.__filename = path;
         pkg.__dirname = nodePath.dirname(path);
+        
         pkgCache[path] = pkg;
         return pkg;
     }

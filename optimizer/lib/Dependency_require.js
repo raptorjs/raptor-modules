@@ -84,10 +84,11 @@ module.exports = {
                     });    
                 }
 
+                
                 if (dep) {
                     dependencies.push(extend({
                         type: 'commonjs-dep',
-                        _sourceFile: resolved.filePath
+                        _sourceFile: main ? main.filePath : resolved.filePath
                     }, dep));
                 }
 
@@ -96,7 +97,7 @@ module.exports = {
                         type: 'commonjs-main',
                         dir: resolved.realPath,
                         main: main.path,
-                        _sourceFile: resolved.filePath
+                        _sourceFile: main.filePath
                     });
 
                     dependencies.push({

@@ -32,23 +32,30 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
             .then(function(dependencies) {
                 var lookup = {};
 
-                expect(dependencies.length).to.equal(3);
+                expect(dependencies.length).to.equal(4);
 
                 dependencies.forEach(function(d) {
                     lookup[d.type] = d;
+                });
+
+                expect(lookup['package']).to.deep.equal({
+                    type: 'package',
+                    path: nodePath.join(__dirname, '../../client/optimizer.json'),
                 });
 
                 expect(lookup['commonjs-dep']).to.deep.equal({
                     type: 'commonjs-dep',
                     parentPath: '',
                     childName: 'bar',
-                    childVersion: '2.0.0'
+                    childVersion: '2.0.0',
+                    _sourceFile: nodePath.join(__dirname, 'test-project/node_modules/bar/lib/index.js')
                 });
 
                 expect(lookup['commonjs-main']).to.deep.equal({
                     type: 'commonjs-main',
                     dir: '/bar@2.0.0',
-                    main: 'lib/index'
+                    main: 'lib/index',
+                    _sourceFile: nodePath.join(__dirname, 'test-project/node_modules/bar/lib/index.js') 
                 });
 
                 expect(lookup.require).to.deep.equal({
@@ -69,7 +76,7 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
             .then(function(dependencies) {
                 var lookup = {};
 
-                expect(dependencies.length).to.equal(3);
+                expect(dependencies.length).to.equal(4);
 
                 var requires = [];
 
@@ -81,6 +88,11 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
                         lookup[d.type] = d;    
                     }
                     
+                });
+
+                expect(lookup['package']).to.deep.equal({
+                    type: 'package',
+                    path: nodePath.join(__dirname, '../../client/optimizer.json'),
                 });
 
                 expect(lookup['commonjs-def']).to.deep.equal({
@@ -119,23 +131,30 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
             .then(function(dependencies) {
                 var lookup = {};
 
-                expect(dependencies.length).to.equal(3);
+                expect(dependencies.length).to.equal(4);
 
                 dependencies.forEach(function(d) {
                     lookup[d.type] = d;
+                });
+
+                expect(lookup['package']).to.deep.equal({
+                    type: 'package',
+                    path: nodePath.join(__dirname, '../../client/optimizer.json'),
                 });
 
                 expect(lookup['commonjs-dep']).to.deep.equal({
                     type: 'commonjs-dep',
                     parentPath: '/$/bar',
                     childName: 'baz',
-                    childVersion: '3.0.0'
+                    childVersion: '3.0.0',
+                    _sourceFile: nodePath.join(__dirname, 'test-project/node_modules/bar/node_modules/baz/lib/index.js')
                 });
 
                 expect(lookup['commonjs-main']).to.deep.equal({
                     type: 'commonjs-main',
                     dir: '/baz@3.0.0',
-                    main: 'lib/index'
+                    main: 'lib/index',
+                    _sourceFile: nodePath.join(__dirname, 'test-project/node_modules/bar/node_modules/baz/lib/index.js')
                 });
 
                 expect(lookup.require).to.deep.equal({
@@ -157,7 +176,7 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
             .then(function(dependencies) {
                 var lookup = {};
 
-                expect(dependencies.length).to.equal(2);
+                expect(dependencies.length).to.equal(3);
 
                 var requires = [];
 
@@ -169,6 +188,11 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
                         lookup[d.type] = d;    
                     }
                     
+                });
+
+                expect(lookup['package']).to.deep.equal({
+                    type: 'package',
+                    path: nodePath.join(__dirname, '../../client/optimizer.json'),
                 });
 
                 expect(lookup['commonjs-def']).to.deep.equal({
@@ -200,10 +224,15 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
             .then(function(dependencies) {
                 var lookup = {};
 
-                expect(dependencies.length).to.equal(3);
+                expect(dependencies.length).to.equal(4);
 
                 dependencies.forEach(function(d) {
                     lookup[d.type] = d;
+                });
+
+                expect(lookup['package']).to.deep.equal({
+                    type: 'package',
+                    path: nodePath.join(__dirname, '../../client/optimizer.json'),
                 });
 
                 expect(lookup['commonjs-dep']).to.deep.equal({
@@ -211,13 +240,15 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
                     parentPath: '/browser-overrides',
                     childName: 'hello-world',
                     childVersion: '9.9.9',
-                    remap: 'hello-world-browserify'
+                    remap: 'hello-world-browserify',
+                    _sourceFile: nodePath.join(__dirname, 'test-project/browser-overrides/node_modules/hello-world-browserify/index.js')
                 });
 
                 expect(lookup['commonjs-main']).to.deep.equal({
                     type: 'commonjs-main',
                     dir: '/hello-world-browserify@9.9.9',
-                    main: 'index'
+                    main: 'index',
+                    _sourceFile: nodePath.join(__dirname, 'test-project/browser-overrides/node_modules/hello-world-browserify/index.js')
                 });
 
                 expect(lookup.require).to.deep.equal({
@@ -242,10 +273,15 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
 
                 // console.log('DEPENDENCIES: ', dependencies);
 
-                expect(dependencies.length).to.equal(2);
+                expect(dependencies.length).to.equal(3);
 
                 dependencies.forEach(function(d) {
                     lookup[d.type] = d;
+                });
+
+                expect(lookup['package']).to.deep.equal({
+                    type: 'package',
+                    path: nodePath.join(__dirname, '../../client/optimizer.json'),
                 });
 
                 expect(lookup['commonjs-def']).to.deep.equal({
@@ -257,7 +293,8 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
                 expect(lookup['commonjs-remap']).to.deep.equal({
                     type: 'commonjs-remap',
                     from: '/browser-overrides/main/index',
-                    to: 'browser/index_browser'
+                    to: 'browser/index_browser',
+                    _sourceFile: nodePath.join(__dirname, 'test-project/browser-overrides/main/browser/index_browser.js')
                 });
 
                 done();
@@ -275,13 +312,25 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
             .then(function(dependencies) {
                 var lookup = {};
 
-                expect(dependencies.length).to.equal(2);
+                expect(dependencies.length).to.equal(3);
+                var pkgs = [];
 
                 dependencies.forEach(function(d) {
-                    lookup[d.type] = d;
+                    if (d.type === 'package') {
+                        pkgs.push(d);
+                    }
+                    else {
+                        lookup[d.type] = d;    
+                    }
+                    
                 });
 
-                expect(lookup['package']).to.deep.equal({
+                expect(pkgs[0]).to.deep.equal({
+                    type: 'package',
+                    path: nodePath.join(__dirname, '../../client/optimizer.json'),
+                });
+
+                expect(pkgs[1]).to.deep.equal({
                     type: 'package',
                     path: nodePath.join(__dirname, 'test-project/src/with-package/foo/optimizer.json')
                 });
@@ -307,13 +356,26 @@ describe('raptor-modules/optimizer/Dependency_require' , function() {
             .then(function(dependencies) {
                 var lookup = {};
 
-                expect(dependencies.length).to.equal(2);
+                expect(dependencies.length).to.equal(3);
+
+                var pkgs = [];
 
                 dependencies.forEach(function(d) {
-                    lookup[d.type] = d;
+                    if (d.type === 'package') {
+                        pkgs.push(d);
+                    }
+                    else {
+                        lookup[d.type] = d;    
+                    }
+                    
                 });
 
-                expect(lookup['package']).to.deep.equal({
+                expect(pkgs[0]).to.deep.equal({
+                    type: 'package',
+                    path: nodePath.join(__dirname, '../../client/optimizer.json'),
+                });
+
+                expect(pkgs[1]).to.deep.equal({
                     type: 'package',
                     path: nodePath.join(__dirname, 'test-project/src/with-package/bar/index-optimizer.json')
                 });
