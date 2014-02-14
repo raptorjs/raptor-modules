@@ -22,5 +22,9 @@ module.exports = {
 
     lastModified: function() {
         return 0;
+    },
+
+    getSourceFile: function() {
+        return this._sourceFile;
     }
 };

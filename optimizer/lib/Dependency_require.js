@@ -6,6 +6,8 @@ var extend = require('raptor-util').extend;
 var detective = require('detective');
 var fs = require('fs');
 var raptorPromises = require('raptor-promises');
+var logger = require('raptor-logging').logger(module);
+var raptorModulesOptimizer = require('./index');
 
 function findRequires(resolved) {
 
@@ -70,20 +72,22 @@ module.exports = {
 
         return findRequires(resolved)
             .then(function(requires) {
-
                 var dependencies = [];
                 var dep = resolved.dep;
                 var main = resolved.main;
                 var remap = resolved.remap;
 
-                dependencies.push({
-                    type: 'package',
-                    path: nodePath.join(__dirname, '../../client/optimizer.json')
-                });
+                if (raptorModulesOptimizer.INCLUDE_CLIENT !== false) {
+                    dependencies.push({
+                        type: 'package',
+                        path: nodePath.join(__dirname, '../../client/optimizer.json')
+                    });    
+                }
 
                 if (dep) {
                     dependencies.push(extend({
-                        type: 'commonjs-dep'
+                        type: 'commonjs-dep',
+                        _sourceFile: resolved.filePath
                     }, dep));
                 }
 
@@ -91,7 +95,8 @@ module.exports = {
                     dependencies.push({
                         type: 'commonjs-main',
                         dir: resolved.realPath,
-                        main: main.path
+                        main: main.path,
+                        _sourceFile: resolved.filePath
                     });
 
                     dependencies.push({
@@ -101,8 +106,14 @@ module.exports = {
                 } else {
 
                     // Include all additional dependencies
-                    if (requires) {
+                    if (requires && requires.length) {
+                        
+
                         var from = nodePath.dirname(resolved.filePath);
+
+                        if (logger.isDebugEnabled()) {
+                            logger.debug('Requires found for "' + resolved.filePath + '":\n   [' + requires.join(', ') + '] - FROM: ' + from + '\n\n');
+                        }
 
                         requires.forEach(function(reqDependency) {
                             dependencies.push({
@@ -150,7 +161,8 @@ module.exports = {
 
                 if (remap) {
                     dependencies.push(extend({
-                        type: 'commonjs-remap'
+                        type: 'commonjs-remap',
+                        _sourceFile: resolved.filePath
                     }, remap));
                 }
 
