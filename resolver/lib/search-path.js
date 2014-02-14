@@ -2,15 +2,18 @@ var nodePath = require('path');
 var Module = require('module').Module;
 
 function find(path, from, callback, thisObj) {
-    
 
-    if (process.platform === 'win32') {
-        path = path.replace(/\//g, '\\'); // Replace forward slashes with back slashes
+    if (path.startsWith('/') || path.indexOf(':') !== -1) {
+        return callback.call(thisObj, path);
     }
 
     if (path.startsWith('./') || path.startsWith('../')) {
         // Don't go through the search paths for relative paths
-        return callback.call(thisObj, nodePath.join(from, path));
+        var joined = callback.call(thisObj, nodePath.join(from, path));
+        if (joined.endsWith('/')) {
+            joined = joined.slice(0, -1);
+        }
+        return joined;
     }
     else {
         var paths = Module._nodeModulePaths(from);
