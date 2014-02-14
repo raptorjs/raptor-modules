@@ -34,3 +34,4 @@ function registerDependencyTypes(optimizer) {
 }
 
 exports.registerDependencyTypes = registerDependencyTypes;
+exports.INCLUDE_CLIENT = true;
