@@ -733,4 +733,45 @@ describe('raptor-modules/client' , function() {
         expect(clientImpl.join('/app/lib/launch', './../.././././')).to.equal('/app');
         done();
     });
+
+    it('should run module from root', function(done) {
+        var clientImpl = require('../lib/index');
+
+        /* 
+        TEST SETUP:
+
+        Call require('raptor-util') from within the following file:
+        /node_modules/raptor-widgets/lib/index.js
+
+        'raptor-util' is installed as a dependency for the top-level 'raptor-modules' module
+        */
+
+        
+        var widgetsModule = null;
+        // var raptorUtilModule = null;
+        clientImpl.dep("/$/raptor-widgets", "raptor-util", "0.1.0-SNAPSHOT");
+        clientImpl.main("/raptor-util@0.1.0-SNAPSHOT", "lib/index");
+        clientImpl.def("/raptor-util@0.1.0-SNAPSHOT/lib/index", function(require, exports, module, __filename, __dirname) {
+            exports.filename = __filename;
+        });
+
+        clientImpl.dep("", "raptor-widgets", "0.1.0-SNAPSHOT");
+        clientImpl.main("/raptor-widgets@0.1.0-SNAPSHOT", "lib/index");
+        clientImpl.main("/raptor-widgets@0.1.0-SNAPSHOT/lib", "index");
+        clientImpl.def("/raptor-widgets@0.1.0-SNAPSHOT/lib/index", function(require, exports, module, __filename, __dirname) {
+            exports.filename = __filename;
+            exports.raptorUtil = require('raptor-util');
+        });
+
+        // define a module for a given real path
+        clientImpl.run("/", function(require, exports, module, __filename, __dirname) { 
+            widgetsModule = require("/$/raptor-widgets");
+        });
+
+        // run will define the instance and automatically load it
+        expect(widgetsModule.filename).to.equal('/$/raptor-widgets/lib/index');
+        expect(widgetsModule.raptorUtil.filename).to.equal('/$/raptor-widgets/$/raptor-util/lib/index');
+
+        done();
+    });
 });
