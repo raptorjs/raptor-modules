@@ -77,8 +77,27 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         });
     });
 
-
-    
+    it('should resolve require correctly for "./"" relative paths', function() {
+        require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));
+        var resolver = require('../');
+        var from = nodePath.join(__dirname, 'test-project/node_modules/foo/lib');
+        var pathInfo = resolver.resolveRequire('./', from);
+        expect(pathInfo).to.deep.equal({
+            logicalPath: '/$/foo/lib',
+            realPath: '/foo@1.0.0/lib',
+            filePath: nodePath.join(__dirname, 'test-project/node_modules/foo/lib'),
+            isDir: true,
+            dep: {
+                parentPath: '',
+                childName: 'foo',
+                childVersion: '1.0.0',
+            },
+            main: {
+                filePath: nodePath.join(__dirname, 'test-project/node_modules/foo/lib/index.js'),
+                path: 'index'
+            }
+        });
+    });
 
     it('should handle browser override for main script in a sub-module', function() {
         require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));

@@ -21,13 +21,13 @@ function runCode(logicalPath, code) {
     }
 
     var out = resumer();
-    out.write(part0);
-    out.write(JSON.stringify(logicalPath));
-    out.write(part1);
+    out.queue(part0);
+    out.queue(JSON.stringify(logicalPath));
+    out.queue(part1);
     stream.pipe(out, { end: false });
 
     stream.on('end', function() {
-        out.write(part2);
+        out.queue(part2);
         out.end();
     });
 

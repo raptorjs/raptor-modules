@@ -19,20 +19,20 @@ function defineCode(path, code, options) {
     }
 
     var out = resumer();
-    out.write('$rmod.def(' + JSON.stringify(path) + ', ');
+    out.queue('$rmod.def(' + JSON.stringify(path) + ', ');
 
     if (!isObject) {
-        out.write('function(require, exports, module, __filename, __dirname) { ');
+        out.queue('function(require, exports, module, __filename, __dirname) { ');
     }
     
     stream.pipe(out, { end: false });
 
     stream.on('end', function() {
         if (!isObject) {
-            out.write(' }'); // End the function wrapper
+            out.queue(' }'); // End the function wrapper
         }
 
-        out.write(');'); // End the function call
+        out.queue(');'); // End the function call
         
         out.end();
     });
