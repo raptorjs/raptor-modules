@@ -46,8 +46,8 @@ https://github.com/joyent/node/blob/master/lib/module.js
     function Module(resolved) {
        /*
         A Node module has these properties:
-        - filename: The real path of the module
-        - id: The logical path of the module
+        - filename: The logical path of the module
+        - id: The logical path of the module (same as filename)
         - exports: The exports provided during load
         - loaded: Has module been fully loaded (set to false until factory function returns)
         
@@ -56,8 +56,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
         - paths: The search path used by this module (NOTE: not documented in Node.js module system so we don't need support)
         - children: The modules that were required by this module
         */
-        this.id = resolved[0];
-        this.filename = resolved[1];
+        this.id = this.filename = resolved[0];
         this.loaded = false;
     }
 
@@ -66,17 +65,17 @@ https://github.com/joyent/node/blob/master/lib/module.js
     proto = Module.prototype;
 
     proto.load = function(factoryOrObject) {
-        var realPath = this.filename;
+        var logicalPath = this.id;
 
         if (factoryOrObject && factoryOrObject.constructor === Function) {
             // factoryOrObject is definitely a function
-            var pos = realPath.lastIndexOf('/');
+            var lastSlashPos = logicalPath.lastIndexOf('/');
 
             // find the value for the __dirname parameter to factory
-            var dirname = realPath.substring(0, pos);
+            var dirname = logicalPath.substring(0, lastSlashPos);
 
             // find the value for the __filename paramter to factory
-            var filename = realPath;
+            var filename = logicalPath;
 
             // local cache for requires initiated from this module/dirname
             var localCache = cacheByDirname[dirname] || (cacheByDirname[dirname] = {});
@@ -293,14 +292,14 @@ https://github.com/joyent/node/blob/master/lib/module.js
         var dependencyId;
         var subpath;
 
-        var pos = target.indexOf('/');
-        if (pos === -1) {
+        var lastSlashPos = target.indexOf('/');
+        if (lastSlashPos === -1) {
             dependencyId = target;
             subpath = '';
         } else {
             // When we're resolving a module, we don't care about the subpath at first
-            dependencyId = target.substring(0, pos);
-            subpath = target.substring(pos);
+            dependencyId = target.substring(0, lastSlashPos);
+            subpath = target.substring(lastSlashPos);
         }
 
         /*

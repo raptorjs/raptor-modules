@@ -159,7 +159,7 @@ describe('raptor-modules/client' , function() {
             instanceCount++;
 
             expect(module.id).to.equal('/$/foo/$/baz/lib/index');
-            expect(module.filename).to.equal('/baz@3.0.0/lib/index');
+            expect(module.filename).to.equal('/$/foo/$/baz/lib/index');
 
             module.exports = {
                 __filename: __filename,
@@ -176,8 +176,8 @@ describe('raptor-modules/client' , function() {
 
         expect(instanceCount).to.equal(1);
 
-        expect(baz.__filename).to.equal('/baz@3.0.0/lib/index');
-        expect(baz.__dirname).to.equal('/baz@3.0.0/lib');
+        expect(baz.__filename).to.equal('/$/foo/$/baz/lib/index');
+        expect(baz.__dirname).to.equal('/$/foo/$/baz/lib');
 
         clientImpl.require('baz/lib/index', '/$/foo');
 
@@ -215,13 +215,13 @@ describe('raptor-modules/client' , function() {
 
         var bazFromFoo = clientImpl.require('baz/lib/index', '/$/foo');
         expect(bazFromFoo.moduleId).to.equal('/$/foo/$/baz/lib/index');
-        expect(bazFromFoo.moduleFilename).to.equal('/baz@3.0.0/lib/index');
+        expect(bazFromFoo.moduleFilename).to.equal('/$/foo/$/baz/lib/index');
 
         expect(instanceCount).to.equal(1);
 
         var bazFromBar = clientImpl.require('baz/lib/index', '/$/bar');
         expect(bazFromBar.moduleId).to.equal('/$/bar/$/baz/lib/index');
-        expect(bazFromBar.moduleFilename).to.equal('/baz@3.0.0/lib/index');
+        expect(bazFromBar.moduleFilename).to.equal('/$/bar/$/baz/lib/index');
 
         expect(instanceCount).to.equal(2);
 
@@ -683,8 +683,8 @@ describe('raptor-modules/client' , function() {
 
         clientImpl.def('/streams-browser@1.0.0/lib/index', function(require, exports, module, __filename, __dirname) {
 
-            expect(__dirname).to.equal('/streams-browser@1.0.0/lib');
-            expect(__filename).to.equal('/streams-browser@1.0.0/lib/index');
+            expect(__dirname).to.equal('/$/streams/lib');
+            expect(__filename).to.equal('/$/streams/lib/index');
 
             module.exports = {
                 name: 'browser'
