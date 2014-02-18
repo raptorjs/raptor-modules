@@ -17,7 +17,7 @@ describe('raptor-modules/client' , function() {
     });
 
     it('should throw error if trying to resolve target that is falsey', function(done) {
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         try {
             clientImpl.resolve('', '/some/module');
@@ -51,7 +51,7 @@ describe('raptor-modules/client' , function() {
     });
 
     it('should resolve modules using search path', function(done) {
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         // define a module for a given real path
         clientImpl.def('/baz@3.0.0/lib/index', function(require, exports, module, __filename, __dirname) {
@@ -89,7 +89,7 @@ describe('raptor-modules/client' , function() {
     });
 
     it('should resolve absolute paths not containing installed modules', function(done) {
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         var resolved;
 
@@ -110,7 +110,7 @@ describe('raptor-modules/client' , function() {
 
     it('should resolve absolute paths containing installed modules', function(done) {
 
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         var resolved;
 
@@ -150,7 +150,7 @@ describe('raptor-modules/client' , function() {
     });
 
     it('should instantiate modules', function(done) {
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         var instanceCount = 0;
 
@@ -187,7 +187,7 @@ describe('raptor-modules/client' , function() {
     });
 
     it('should instantiate multiple instances of module if loaded from separate logical paths', function(done) {
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         var instanceCount = 0;
 
@@ -238,7 +238,7 @@ describe('raptor-modules/client' , function() {
     });
 
     it('should load modules that are objects', function(done) {
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
 
         // define a module for a given real path
@@ -259,7 +259,7 @@ describe('raptor-modules/client' , function() {
     });
 
     it('should run modules', function(done) {
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         var instanceCount = 0;
 
@@ -295,7 +295,7 @@ describe('raptor-modules/client' , function() {
     });
 
     it('should provide require function to module', function(done) {
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         clientImpl.def('/app/launch/util', function(require, exports, module, __filename, __dirname) {
             module.exports.sayHello = function() {
@@ -331,7 +331,7 @@ describe('raptor-modules/client' , function() {
 
     it('should provide require function that has a resolve property', function(done) {
 
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         clientImpl.def('/app/launch/util', function(require, exports, module, __filename, __dirname) {
             module.exports.sayHello = function() {
@@ -357,7 +357,7 @@ describe('raptor-modules/client' , function() {
 
     it('should not instantiate during require.resolve(target) call', function(done) {
 
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         var instanceCount = 0;
 
@@ -384,7 +384,7 @@ describe('raptor-modules/client' , function() {
 
     it('should allow factory to provide new exports', function(done) {
 
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         clientImpl.def('/app/launch/util', function(require, exports, module, __filename, __dirname) {
             module.exports = {
@@ -404,7 +404,7 @@ describe('raptor-modules/client' , function() {
 
     it('should allow factory to add properties to export', function(done) {
 
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         clientImpl.def('/app/launch/util', function(require, exports, module, __filename, __dirname) {
             module.exports.greeting = 'Hello!';
@@ -421,7 +421,7 @@ describe('raptor-modules/client' , function() {
 
     it('should allow factory to be object', function(done) {
 
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         clientImpl.def('/app/launch/util', {
             greeting: 'Hello!'
@@ -443,7 +443,7 @@ describe('raptor-modules/client' , function() {
          * so we'll just return null as the exports. We will however, treat
          * undefined specially.
          */
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         clientImpl.def('/app/launch/util', null);
         
@@ -458,7 +458,7 @@ describe('raptor-modules/client' , function() {
 
     it('should allow factory to be undefined object', function(done) {
 
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         // An undefined value as factory will remove the definition and make it
         // appear as though the module does not exist
@@ -476,7 +476,7 @@ describe('raptor-modules/client' , function() {
 
     it('should find targets with or without ".js" extension', function(done) {
 
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         var instanceCount = 0;
 
@@ -500,7 +500,7 @@ describe('raptor-modules/client' , function() {
 
     it('should resolve targets with or without ".js" extension', function(done) {
 
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         var instanceCount = 0;
 
@@ -523,7 +523,7 @@ describe('raptor-modules/client' , function() {
 
     it('should find targets when definition includes extension', function(done) {
 
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         var instanceCount = 0;
 
@@ -547,7 +547,7 @@ describe('raptor-modules/client' , function() {
 
     it('should allow main file to be specified for any directory', function(done) {
 
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         var instanceCount = 0;
 
@@ -600,7 +600,7 @@ describe('raptor-modules/client' , function() {
 
     it('should allow main file to be specified for a module', function(done) {
 
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         var instanceCount = 0;
 
@@ -641,7 +641,7 @@ describe('raptor-modules/client' , function() {
 
     it('should handle remapping individual files', function(done) {
 
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         clientImpl.def('/universal@1.0.0/lib/index', function(require, exports, module, __filename, __dirname) {
             module.exports = {
@@ -679,7 +679,7 @@ describe('raptor-modules/client' , function() {
     });
     
     it('should handle remapping entire modules to shim modules', function(done) {
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         clientImpl.def('/streams-browser@1.0.0/lib/index', function(require, exports, module, __filename, __dirname) {
 
@@ -716,7 +716,7 @@ describe('raptor-modules/client' , function() {
         //       I don't care about joining an absolute path, empty string
         //       or even a "module name" because these are handled specially
         //       in the resolve method.
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         expect(clientImpl.join('/foo/baz', './abc.js')).to.equal('/foo/baz/abc.js');
         expect(clientImpl.join('/foo/baz', '../abc.js')).to.equal('/foo/abc.js');
@@ -735,7 +735,7 @@ describe('raptor-modules/client' , function() {
     });
 
     it('should run module from root', function(done) {
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         /* 
         TEST SETUP:
@@ -776,7 +776,7 @@ describe('raptor-modules/client' , function() {
     });
 
     it('should allow main with a relative path', function(done) {
-        var clientImpl = require('../lib/index');
+        var clientImpl = require('../');
 
         clientImpl.dep("/$/foo", "bar", "0.1.0-SNAPSHOT");
         clientImpl.main("/bar@0.1.0-SNAPSHOT/Baz", "../lib/Baz");
