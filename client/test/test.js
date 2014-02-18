@@ -737,7 +737,7 @@ describe('raptor-modules/client' , function() {
     it('should run module from root', function(done) {
         var clientImpl = require('../lib/index');
 
-        /* 
+        /*
         TEST SETUP:
 
         Call require('raptor-util') from within the following file:
@@ -749,23 +749,23 @@ describe('raptor-modules/client' , function() {
         
         var widgetsModule = null;
         // var raptorUtilModule = null;
-        clientImpl.dep("/$/raptor-widgets", "raptor-util", "0.1.0-SNAPSHOT");
-        clientImpl.main("/raptor-util@0.1.0-SNAPSHOT", "lib/index");
-        clientImpl.def("/raptor-util@0.1.0-SNAPSHOT/lib/index", function(require, exports, module, __filename, __dirname) {
+        clientImpl.dep('/$/raptor-widgets', 'raptor-util', '0.1.0-SNAPSHOT');
+        clientImpl.main('/raptor-util@0.1.0-SNAPSHOT', 'lib/index');
+        clientImpl.def('/raptor-util@0.1.0-SNAPSHOT/lib/index', function(require, exports, module, __filename, __dirname) {
             exports.filename = __filename;
         });
 
-        clientImpl.dep("", "raptor-widgets", "0.1.0-SNAPSHOT");
-        clientImpl.main("/raptor-widgets@0.1.0-SNAPSHOT", "lib/index");
-        clientImpl.main("/raptor-widgets@0.1.0-SNAPSHOT/lib", "index");
-        clientImpl.def("/raptor-widgets@0.1.0-SNAPSHOT/lib/index", function(require, exports, module, __filename, __dirname) {
+        clientImpl.dep('', 'raptor-widgets', '0.1.0-SNAPSHOT');
+        clientImpl.main('/raptor-widgets@0.1.0-SNAPSHOT', 'lib/index');
+        clientImpl.main('/raptor-widgets@0.1.0-SNAPSHOT/lib', 'index');
+        clientImpl.def('/raptor-widgets@0.1.0-SNAPSHOT/lib/index', function(require, exports, module, __filename, __dirname) {
             exports.filename = __filename;
             exports.raptorUtil = require('raptor-util');
         });
 
         // define a module for a given real path
-        clientImpl.run("/", function(require, exports, module, __filename, __dirname) { 
-            widgetsModule = require("/$/raptor-widgets");
+        clientImpl.run('/', function(require, exports, module, __filename, __dirname) {
+            widgetsModule = require('/$/raptor-widgets');
         });
 
         // run will define the instance and automatically load it
@@ -775,25 +775,38 @@ describe('raptor-modules/client' , function() {
         done();
     });
 
-    it('should allow main with a relative path', function(done) {
+    it.only('should allow main with a relative path', function(done) {
         var clientImpl = require('../lib/index');
 
-        clientImpl.dep("/$/foo", "bar", "0.1.0-SNAPSHOT");
-        clientImpl.main("/bar@0.1.0-SNAPSHOT/Baz", "../lib/Baz");
-        clientImpl.def("/bar@0.1.0-SNAPSHOT/lib/Baz", function(require, exports, module, __filename, __dirname) {
+        // /$/foo depends on bar@0.1.0-SNAPSHOT
+        clientImpl.dep('/$/foo', 'bar', '0.1.0-SNAPSHOT');
+
+        // Requiring "/$/foo/$/bar/Baz" should actually resolve to "/$/foo/$/bar/lib/Baz"
+        clientImpl.main('/bar@0.1.0-SNAPSHOT/Baz', '../lib/Baz');
+
+        // Define the bar/lib/Baz module
+        clientImpl.def('/bar@0.1.0-SNAPSHOT/lib/Baz', function(require, exports, module, __filename, __dirname) {
             exports.isBaz = true;
         });
 
-        clientImpl.dep("", "foo", "0.1.0-SNAPSHOT");
-        clientImpl.main("/foo@0.1.0-SNAPSHOT", "lib/index");
-        clientImpl.def("/foo@0.1.0-SNAPSHOT/lib/index", function(require, exports, module, __filename, __dirname) {
+        // Add dependency /$/foo --> /foo@0.1.0-SNAPSHOT
+        clientImpl.dep('', 'foo', '0.1.0-SNAPSHOT');
+
+        // Requiring "/$/foo" should actually resolve to  "/$/foo/lib/index"
+        clientImpl.main('/foo@0.1.0-SNAPSHOT', 'lib/index');
+
+        // Define foo/lib/index
+        clientImpl.def('/foo@0.1.0-SNAPSHOT/lib/index', function(require, exports, module, __filename, __dirname) {
+            expect(module.id).to.equal('/$/foo/lib/index');
+
             exports.Baz = require('bar/Baz');
+
+            // make sure that "bar/Baz" resolves to "bar/lib/Baz"
+            expect(require('bar/lib/Baz')).to.equal(require('bar/Baz'));
         });
 
-
-
         var Baz = null;
-        clientImpl.run("/", function(require, exports, module, __filename, __dirname) { 
+        clientImpl.run('/', function(require, exports, module, __filename, __dirname) {
             var foo = require('foo');
             Baz = foo.Baz;
 
