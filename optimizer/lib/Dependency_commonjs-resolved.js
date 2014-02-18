@@ -20,5 +20,9 @@ module.exports = {
 
     lastModified: function() {
         return 0;
+    },
+
+    doCalculateKey: function() {
+        return this.calculateKeyFromProps();
     }
 };

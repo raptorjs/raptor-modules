@@ -22,5 +22,9 @@ module.exports = {
 
     getSourceFile: function() {
         return this._sourceFile;
+    },
+
+    doCalculateKey: function() {
+        return this.calculateKeyFromProps();
     }
 };
