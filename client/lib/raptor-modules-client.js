@@ -405,8 +405,8 @@ https://github.com/joyent/node/blob/master/lib/module.js
         // check to see if "target" is a "directory" which has a registered main file
         if ((relativePath = mains[realPath]) !== undefined) {
             // there is a main file corresponding to the given target to add the relative path
-            resolved[0] = logicalPath = logicalPath + '/' + relativePath;
-            resolved[1] = realPath = realPath + '/' + relativePath;
+            resolved[0] = logicalPath = join(logicalPath, relativePath);
+            resolved[1] = realPath = join(realPath, relativePath);
         }
 
         var newRelativePath = remapped[realPath];
