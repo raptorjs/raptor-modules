@@ -52,7 +52,7 @@ module.exports = {
         if (this._resolved.isDir) {
             // Use the directory of the main file as the directory (used for determining how
             // to recurse into modules when building bundles)
-            return nodePath.dirname(this._resolved.main);
+            return nodePath.dirname(this._resolved.main.filePath);
         }
         else {
             return nodePath.dirname(this._resolved.filePath);

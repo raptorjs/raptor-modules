@@ -1,5 +1,6 @@
 var transport = require('../../transport');
 var fs = require('fs');
+var nodePath = require('path');
 
 module.exports = {
     properties: {
@@ -7,7 +8,7 @@ module.exports = {
     },
     
     getDir: function() {
-        return this.getParentManifestDir();
+        return nodePath.dirname(this._file);
     },
 
     read: function(context) {
