@@ -774,4 +774,34 @@ describe('raptor-modules/client' , function() {
 
         done();
     });
+
+    it('should allow main with a relative path', function(done) {
+        var clientImpl = require('../lib/index');
+
+        clientImpl.dep("/$/foo", "bar", "0.1.0-SNAPSHOT");
+        clientImpl.main("/bar@0.1.0-SNAPSHOT/Baz", "../lib/Baz");
+        clientImpl.def("/bar@0.1.0-SNAPSHOT/lib/Baz", function(require, exports, module, __filename, __dirname) {
+            exports.isBaz = true;
+        });
+
+        clientImpl.dep("", "foo", "0.1.0-SNAPSHOT");
+        clientImpl.main("/foo@0.1.0-SNAPSHOT", "lib/index");
+        clientImpl.def("/foo@0.1.0-SNAPSHOT/lib/index", function(require, exports, module, __filename, __dirname) {
+            exports.Baz = require('bar/Baz');
+        });
+
+
+
+        var Baz = null;
+        clientImpl.run("/", function(require, exports, module, __filename, __dirname) { 
+            var foo = require('foo');
+            Baz = foo.Baz;
+
+        });
+
+        expect(Baz.isBaz).to.equal(true);
+
+
+        done();
+    });
 });
