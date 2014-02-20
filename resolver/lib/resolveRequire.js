@@ -46,13 +46,17 @@ function resolveRequire(target, from) {
         }
 
         resolvedPath = searchPath.find(target, from, function(path) {
-            // Try with the extensions
-            var extensions = require.extensions;
-            for (var ext in extensions) {
-                if (extensions.hasOwnProperty(ext)) {
-                    var pathWithExt = path + ext;
-                    if (fs.existsSync(pathWithExt)) {
-                        return pathWithExt;
+
+            var dirname = nodePath.dirname(path);
+            if (nodePath.basename(dirname) !== 'node_modules' && moduleUtil.isDirCached(dirname)) {
+                // Try with the extensions
+                var extensions = require.extensions;
+                for (var ext in extensions) {
+                    if (extensions.hasOwnProperty(ext) && ext !== '.node') {
+                        var pathWithExt = path + ext;
+                        if (moduleUtil.isDirCached(nodePath.dirname()) && fs.existsSync(pathWithExt)) {
+                            return pathWithExt;
+                        }
                     }
                 }
             }

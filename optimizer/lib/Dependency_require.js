@@ -1,5 +1,6 @@
 var nodePath = require('path');
-var getPathInfo = require('../../util').getPathInfo;
+var raptorModulesUtil = require('../../util');
+var getPathInfo = raptorModulesUtil.getPathInfo;
 var resolveRequire = require('../../resolver').resolveRequire;
 var extend = require('raptor-util').extend;
 
@@ -8,8 +9,18 @@ var fs = require('fs');
 var raptorPromises = require('raptor-promises');
 var logger = require('raptor-logging').logger(module);
 var raptorModulesOptimizer = require('./index');
+var ok = require('assert').ok;
+var thenFS = require('then-fs');
 
-function findRequires(resolved) {
+function lastModified(path) {
+    var promise = thenFS.stat(path).then(function(stat) {
+            return stat.mtime.getTime();
+        });
+
+    return raptorPromises.resolved(promise);
+}
+
+function findRequires(resolved, context) {
 
     if (resolved.isDir) {
         return raptorPromises.resolved();
@@ -17,16 +28,44 @@ function findRequires(resolved) {
 
     var path = resolved.filePath;
 
-    var deferred = raptorPromises.defer();
-    fs.readFile(path, {encoding: 'utf8'}, function(err, src) {
-        if (err) {
-            return deferred.reject(err);
+    function doFindRequires() {
+        var deferred = raptorPromises.defer();
+        fs.readFile(path, {encoding: 'utf8'}, function(err, src) {
+            if (err) {
+                return deferred.reject(err);
+            }
+
+            deferred.resolve(detective(src));
+        });
+
+        return deferred.promise;
+    }
+    
+    if (context && context.cache) {
+        var cacheKey = path;
+        var projectRootDir = raptorModulesUtil.getProjectRootDir(path);
+        if (path.startsWith(projectRootDir)) {
+            cacheKey = "$APP_ROOT" + cacheKey.substring(projectRootDir.length);
         }
 
-        deferred.resolve(detective(src));
-    });
+        var cache = context.cache.getCache('requires');
 
-    return deferred.promise;
+        return lastModified(path)
+            .then(function(lastModified) {
+                return cache.get(cacheKey, {
+                    lastModified: lastModified,
+                    builder: function() {
+                        return doFindRequires();
+                    }
+                });
+            });
+        
+        
+    } else {
+        return doFindRequires();
+    }
+
+    
 }
 
 module.exports = {
@@ -66,11 +105,12 @@ module.exports = {
         };
     },
 
-    getDependencies: function() {
+    getDependencies: function(context) {
+        ok(context, '"context" argument expected');
 
         var resolved = this._resolved;
 
-        return findRequires(resolved)
+        return findRequires(resolved, context)
             .then(function(requires) {
                 var dependencies = [];
                 var dep = resolved.dep;

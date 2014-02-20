@@ -1,5 +1,6 @@
 var nodePath = require('path');
 var Module = require('module').Module;
+var raptorModulesUtil = require('../../util');
 
 function find(path, from, callback, thisObj) {
 
@@ -20,7 +21,10 @@ function find(path, from, callback, thisObj) {
 
         for (var i=0, len=paths.length; i<len; i++) {
             var searchPath = paths[i];
-
+            if (!raptorModulesUtil.isDirCached(searchPath)) {
+                continue;
+            }
+            
             var result = callback.call(thisObj, nodePath.join(searchPath, path));
             if (result) {
                 return result;
