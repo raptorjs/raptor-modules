@@ -37,9 +37,8 @@ https://github.com/joyent/node/blob/master/lib/module.js
     // temporary variable for referencing a prototype
     var proto;
 
-    function moduleNotFoundError(target, from) {
-        var err = new Error('Cannot find module "' + target + '"' + (from ? ' from "' + from + '"' : ''));
-
+    function moduleNotFoundError(target) {
+        var err = new Error('Cannot find module "' + target + '"');
         err.code = 'MODULE_NOT_FOUND';
         return err;
     }
@@ -375,7 +374,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
             end = from.lastIndexOf('/', start - 1);
         }
 
-        throw moduleNotFoundError(target, from);
+        throw moduleNotFoundError(target);
     }
 
     function resolve(target, from) {
@@ -403,18 +402,17 @@ https://github.com/joyent/node/blob/master/lib/module.js
         // There is no installed module in the path
         var relativePath;
 
-        var newRelativePath = remapped[realPath];
-        
-        if (newRelativePath !== undefined) {
-            logicalPath = join(logicalPath + '/..', newRelativePath);
-            realPath = join(realPath + '/..', newRelativePath);
-        }
-
         // check to see if "target" is a "directory" which has a registered main file
         if ((relativePath = mains[realPath]) !== undefined) {
             // there is a main file corresponding to the given target to add the relative path
             logicalPath = join(logicalPath, relativePath);
             realPath = join(realPath, relativePath);
+        }
+
+        var newRelativePath = remapped[realPath];
+        if (newRelativePath !== undefined) {
+            logicalPath = join(logicalPath + '/..', newRelativePath);
+            realPath = join(realPath + '/..', newRelativePath);
         }
 
         var factoryOrObject = definitions[realPath];
@@ -423,7 +421,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
             var realPathWithoutExtension;
             if (((realPathWithoutExtension = withoutExtension(realPath)) === null) ||
                 ((factoryOrObject = definitions[realPathWithoutExtension]) === undefined)) {
-                throw moduleNotFoundError(target, from);
+                throw moduleNotFoundError(target);
             }
 
             // we found the definition based on real path without extension so
@@ -432,10 +430,9 @@ https://github.com/joyent/node/blob/master/lib/module.js
             realPath = realPathWithoutExtension;
         }
 
+        // since we had to make sure a definition existed don't throw this away
         resolved[0] = logicalPath;
         resolved[1] = realPath;
-
-        // since we had to make sure a definition existed don't throw this away
         resolved[2] = factoryOrObject;
 
         return resolved;
