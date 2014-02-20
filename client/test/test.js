@@ -683,8 +683,8 @@ describe('raptor-modules/client' , function() {
 
         clientImpl.def('/streams-browser@1.0.0/lib/index', function(require, exports, module, __filename, __dirname) {
 
-            expect(__dirname).to.equal('/$/streams/lib');
-            expect(__filename).to.equal('/$/streams/lib/index');
+            expect(__dirname).to.equal('/$/streams-browser/lib');
+            expect(__filename).to.equal('/$/streams-browser/lib/index');
 
             module.exports = {
                 name: 'browser'
@@ -814,7 +814,32 @@ describe('raptor-modules/client' , function() {
 
         expect(Baz.isBaz).to.equal(true);
 
-
         done();
+    });
+
+    it('should handle browser overrides', function() {
+        var clientImpl = require('../');
+
+        clientImpl.dep('/$/raptor-render-context', 'events-browserify', '0.0.1', 'events');
+        clientImpl.main('/events-browserify@0.0.1', 'events');;
+
+        clientImpl.def('/events-browserify@0.0.1/events', function(require, exports, module, __filename, __dirname) {
+            exports.EVENTS_BROWSERIFY = true;
+        });
+
+        clientImpl.dep('', 'raptor-render-context', '0.1.0-SNAPSHOT');
+        clientImpl.main('/raptor-render-context@0.1.0-SNAPSHOT', 'lib/raptor-render-context');
+        clientImpl.def('/raptor-render-context@0.1.0-SNAPSHOT/lib/raptor-render-context', function(require, exports, module, __filename, __dirname) {
+            exports.RAPTOR_RENDER_CONTEXT = true;
+            exports.events = require('events');
+        });
+
+        var raptorRenderContext = null;
+        clientImpl.run('/', function(require, exports, module, __filename, __dirname) {
+            raptorRenderContext = require('raptor-render-context');
+        });
+
+        expect(raptorRenderContext.RAPTOR_RENDER_CONTEXT).to.equal(true);
+        expect(raptorRenderContext.events.EVENTS_BROWSERIFY).to.equal(true);
     });
 });
