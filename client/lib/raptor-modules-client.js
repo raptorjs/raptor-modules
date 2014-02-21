@@ -135,9 +135,10 @@ https://github.com/joyent/node/blob/master/lib/module.js
     }
 
     function registerDependency(logicalParentPath, dependencyId, dependencyVersion, dependencyAlsoKnownAs) {
-        dependencies[logicalParentPath + '/$/' + dependencyId] =  [dependencyVersion];
+        var logicalPath = logicalParentPath + '/$/' + dependencyId;
+        dependencies[logicalPath] =  [dependencyVersion];
         if (dependencyAlsoKnownAs !== undefined) {
-            dependencies[logicalParentPath + '/$/' + dependencyAlsoKnownAs] =  [dependencyVersion, dependencyId];
+            dependencies[logicalParentPath + '/$/' + dependencyAlsoKnownAs] =  [dependencyVersion, dependencyId, logicalPath];
         }
     }
 
@@ -277,8 +278,12 @@ https://github.com/joyent/node/blob/master/lib/module.js
         }
 
         return versionedDependencyInfo(
-            logicalPath,
+            // dependencyInfo[2] is the logicalPath that the module should actually use
+            // if it has been remapped. If dependencyInfo[2] is undefined then we haven't
+            // found a remapped module and simply use the logicalPath that we checked
+            dependencyInfo[2] || logicalPath,
 
+            // realPath:
             // dependencyInfo[1] is the optional remapped dependency ID
             // (use the actual dependencyID from target if remapped dependency ID is undefined)
             dependencyInfo[1] || dependencyId,
@@ -324,7 +329,10 @@ https://github.com/joyent/node/blob/master/lib/module.js
         var dependencyInfo = dependencies[logicalPath];
         if (dependencyInfo !== undefined) {
             return versionedDependencyInfo(
-                logicalPath,
+                // dependencyInfo[2] is the logicalPath that the module should actually use
+                // if it has been remapped. If dependencyInfo[2] is undefined then we haven't
+                // found a remapped module and simply use the logicalPath that we checked
+                dependencyInfo[2] || logicalPath,
 
                 // dependencyInfo[1] is the optional remapped dependency ID
                 // (use the actual dependencyID from target if remapped dependency ID is undefined)
@@ -358,7 +366,10 @@ https://github.com/joyent/node/blob/master/lib/module.js
             dependencyInfo = dependencies[logicalPath];
             if (dependencyInfo !== undefined) {
                 return versionedDependencyInfo(
-                    logicalPath,
+                    // dependencyInfo[2] is the logicalPath that the module should actually use
+                    // if it has been remapped. If dependencyInfo[2] is undefined then we haven't
+                    // found a remapped module and simply use the logicalPath that we checked
+                    dependencyInfo[2] || logicalPath,
 
                     // dependencyInfo[1] is the optional remapped dependency ID
                     // (use the actual dependencyID from target if remapped dependency ID is undefined)

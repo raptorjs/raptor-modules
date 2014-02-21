@@ -704,9 +704,12 @@ describe('raptor-modules/client' , function() {
         //clientImpl.remap('streams', 'streams-browser', '/abc');
 
         // requiring "streams" effectively a require on "streams-browser";
-        var streams = clientImpl.require('streams/lib/index', '/app/lib/index');
+        var streams1 = clientImpl.require('streams/lib/index', '/app/lib/index');
+        var streams2 = clientImpl.require('/$/streams/lib/index', '/app/lib/index');
 
-        expect(streams.name).to.equal('browser');
+        expect(streams1).to.equal(streams2);
+        
+        expect(streams1.name).to.equal('browser');
 
         done();
     });
