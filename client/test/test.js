@@ -851,7 +851,7 @@ describe('raptor-modules/client' , function() {
 
         var processModule = null;
 
-        clientImpl.def('/process@0.6.0/browser', function(require, exports, module, __filename, __dirname) { 
+        clientImpl.def('/process@0.6.0/browser', function(require, exports, module, __filename, __dirname) {
             exports.PROCESS = true;
         });
 
@@ -872,20 +872,26 @@ describe('raptor-modules/client' , function() {
 
         var raptorTemplatesModule = null;
 
-        clientImpl.def("/raptor-templates@0.1.0-SNAPSHOT/runtime/lib/raptor-templates", function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/raptor-templates@0.1.0-SNAPSHOT/runtime/lib/raptor-templates', function(require, exports, module, __filename, __dirname) {
             exports.RAPTOR_TEMPLATES = true;
             exports.raptorRenderContext = require('raptor-render-context');
         });
-        clientImpl.dep("", "raptor-templates", "0.1.0-SNAPSHOT");
-        
-        clientImpl.main("/raptor-templates@0.1.0-SNAPSHOT", "runtime/lib/raptor-templates");
 
-        clientImpl.def("/raptor-render-context@0.1.0-SNAPSHOT/lib/raptor-render-context", function(require, exports, module, __filename, __dirname) {
+        // install dependency /$/raptor-templates (version 0.1.0-SNAPSHOT)
+        clientImpl.dep('', 'raptor-templates', '0.1.0-SNAPSHOT');
+        
+        // If something like "/$/raptor-templates" is required then
+        // use "/$/raptor-templates/runtime/lib/raptor-templates"
+        clientImpl.main('/raptor-templates@0.1.0-SNAPSHOT', 'runtime/lib/raptor-templates');
+
+        clientImpl.def('/raptor-render-context@0.1.0-SNAPSHOT/lib/raptor-render-context', function(require, exports, module, __filename, __dirname) {
             exports.RAPTOR_RENDER_CONTEXT = true;
         });
 
-        clientImpl.main("/raptor-render-context@0.1.0-SNAPSHOT", "lib/raptor-render-context");
-        clientImpl.dep("/$/raptor-templates", "raptor-render-context", "0.1.0-SNAPSHOT");
+        clientImpl.main('/raptor-render-context@0.1.0-SNAPSHOT', 'lib/raptor-render-context');
+
+        // install dependency /$/raptor-templates/$/raptor-render-context (version 0.1.0-SNAPSHOT)
+        clientImpl.dep('/$/raptor-templates', 'raptor-render-context', '0.1.0-SNAPSHOT');
 
         clientImpl.run('/', function(require, exports, module, __filename, __dirname) {
             raptorTemplatesModule = require('raptor-templates');

@@ -363,6 +363,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
             }
 
             logicalPath = from.substring(0, end) + '/$/' + dependencyId;
+
             dependencyInfo = dependencies[logicalPath];
             if (dependencyInfo !== undefined) {
                 return versionedDependencyInfo(
@@ -383,7 +384,8 @@ https://github.com/joyent/node/blob/master/lib/module.js
                 break;
             }
 
-            end = from.lastIndexOf('/', start - 1);
+            // move end to the last slash that precedes it
+            end = start;
         }
 
         throw moduleNotFoundError(target, from);
