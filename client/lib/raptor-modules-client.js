@@ -37,8 +37,9 @@ https://github.com/joyent/node/blob/master/lib/module.js
     // temporary variable for referencing a prototype
     var proto;
 
-    function moduleNotFoundError(target) {
-        var err = new Error('Cannot find module "' + target + '"');
+    function moduleNotFoundError(target, from) {
+        var err = new Error('Cannot find module "' + target + '"' + (from ? ' from "' + from + '"' : ''));
+
         err.code = 'MODULE_NOT_FOUND';
         return err;
     }
@@ -374,7 +375,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
             end = from.lastIndexOf('/', start - 1);
         }
 
-        throw moduleNotFoundError(target);
+        throw moduleNotFoundError(target, from);
     }
 
     function resolve(target, from) {
@@ -421,7 +422,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
             var realPathWithoutExtension;
             if (((realPathWithoutExtension = withoutExtension(realPath)) === null) ||
                 ((factoryOrObject = definitions[realPathWithoutExtension]) === undefined)) {
-                throw moduleNotFoundError(target);
+                throw moduleNotFoundError(target, from);
             }
 
             // we found the definition based on real path without extension so
