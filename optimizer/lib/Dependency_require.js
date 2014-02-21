@@ -11,6 +11,8 @@ var logger = require('raptor-logging').logger(module);
 var raptorModulesOptimizer = require('./index');
 var ok = require('assert').ok;
 var thenFS = require('then-fs');
+var VAR_REQUIRE_PROCESS = 'process=require("process")';
+var processRegExp = /process\./;
 
 function lastModified(path) {
     var promise = thenFS.stat(path).then(function(stat) {
@@ -20,22 +22,34 @@ function lastModified(path) {
     return raptorPromises.resolved(promise);
 }
 
-function findRequires(resolved, context) {
-
+function inspectSource(resolved, context) {
     if (resolved.isDir) {
         return raptorPromises.resolved();
     }
 
     var path = resolved.filePath;
 
-    function doFindRequires() {
+    function doInspect() {
         var deferred = raptorPromises.defer();
         fs.readFile(path, {encoding: 'utf8'}, function(err, src) {
             if (err) {
                 return deferred.reject(err);
             }
 
-            deferred.resolve(detective(src));
+            var process = processRegExp.test(src);
+            var requires = detective(src);
+
+            var result = {};
+
+            if (requires && requires.length) {
+                result.requires = requires;
+            }
+
+            if (process) {
+                result.process = true;
+            }
+
+            deferred.resolve(result);
         });
 
         return deferred.promise;
@@ -55,14 +69,14 @@ function findRequires(resolved, context) {
                 return cache.get(cacheKey, {
                     lastModified: lastModified,
                     builder: function() {
-                        return doFindRequires();
+                        return doInspect();
                     }
                 });
             });
         
         
     } else {
-        return doFindRequires();
+        return doInspect();
     }
 
     
@@ -110,8 +124,22 @@ module.exports = {
 
         var resolved = this._resolved;
 
-        return findRequires(resolved, context)
-            .then(function(requires) {
+        var path = this.path;
+
+        return inspectSource(resolved, context)
+            .then(function(inspect) {
+                var requires;
+                var processRequired = false;
+
+                if (inspect) {
+                    requires = inspect.requires;
+                    processRequired = inspect.process;
+                }
+
+                if (path === 'process' || path === 'raptor-render-context') {
+                    console.log('PROCESS PATH INFO: ', resolved);
+                }
+
                 var dependencies = [];
                 var dep = resolved.dep;
                 var main = resolved.main;
@@ -124,15 +152,20 @@ module.exports = {
                     });    
                 }
 
-                
-                if (dep) {
-                    dependencies.push(extend({
-                        type: 'commonjs-dep',
-                        _sourceFile: main ? main.filePath : resolved.filePath
-                    }, dep));
+                if (processRequired) {
+                    dependencies.push({
+                        type: 'require',
+                        path: 'process',
+                        from: __dirname
+                    });
                 }
 
                 if (main) {
+                    dependencies.push({
+                        type: 'require',
+                        resolvedPath: main.filePath
+                    });
+
                     dependencies.push({
                         type: 'commonjs-main',
                         dir: resolved.realPath,
@@ -140,11 +173,29 @@ module.exports = {
                         _sourceFile: main.filePath
                     });
 
-                    dependencies.push({
-                        type: 'require',
-                        resolvedPath: main.filePath
-                    });
+                    
                 } else {
+                    var additionalVars;
+                    if (processRequired) {
+                        additionalVars = [VAR_REQUIRE_PROCESS];
+                    }
+                    if (this.run) {
+                        dependencies.push({
+                            type: 'commonjs-run',
+                            path: resolved.logicalPath,
+                            _file: resolved.filePath,
+                            _additionalVars: additionalVars
+                        });
+                    }
+                    else {
+                        dependencies.push({
+                            type: 'commonjs-def',
+                            path: resolved.realPath,
+                            _file: resolved.filePath,
+                            _additionalVars: additionalVars
+                        });
+                    }
+
 
                     // Include all additional dependencies
                     if (requires && requires.length) {
@@ -183,21 +234,13 @@ module.exports = {
                             path: optimizerJsonPath
                         });
                     }
-                    
-                    if (this.run) {
-                        dependencies.push({
-                            type: 'commonjs-run',
-                            path: resolved.logicalPath,
-                            _file: resolved.filePath
-                        });
-                    }
-                    else {
-                        dependencies.push({
-                            type: 'commonjs-def',
-                            path: resolved.realPath,
-                            _file: resolved.filePath
-                        });   
-                    }
+                }
+
+                if (dep) {
+                    dependencies.push(extend({
+                        type: 'commonjs-dep',
+                        _sourceFile: main ? main.filePath : resolved.filePath
+                    }, dep));
                 }
 
                 if (remap) {
