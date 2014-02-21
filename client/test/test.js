@@ -821,7 +821,7 @@ describe('raptor-modules/client' , function() {
         var clientImpl = require('../');
 
         clientImpl.dep('/$/raptor-render-context', 'events-browserify', '0.0.1', 'events');
-        clientImpl.main('/events-browserify@0.0.1', 'events');;
+        clientImpl.main('/events-browserify@0.0.1', 'events');
 
         clientImpl.def('/events-browserify@0.0.1/events', function(require, exports, module, __filename, __dirname) {
             exports.EVENTS_BROWSERIFY = true;
@@ -842,4 +842,56 @@ describe('raptor-modules/client' , function() {
         expect(raptorRenderContext.RAPTOR_RENDER_CONTEXT).to.equal(true);
         expect(raptorRenderContext.events.EVENTS_BROWSERIFY).to.equal(true);
     });
+
+    it('should handle browser override for main', function() {
+        var clientImpl = require('../');
+
+        var processModule = null;
+
+        clientImpl.def('/process@0.6.0/browser', function(require, exports, module, __filename, __dirname) { 
+            exports.PROCESS = true;
+        });
+
+
+        clientImpl.dep('', 'process', '0.6.0');
+        clientImpl.remap('/process@0.6.0/index', 'browser');
+        clientImpl.main('/process@0.6.0', 'index');
+
+        clientImpl.run('/', function(require, exports, module, __filename, __dirname) {
+            processModule = require('process');
+        });
+
+        expect(processModule.PROCESS).to.equal(true);
+    });
+
+    it('should handle browser override for main', function() {
+        var clientImpl = require('../');
+
+        var raptorTemplatesModule = null;
+
+        clientImpl.def("/raptor-templates@0.1.0-SNAPSHOT/runtime/lib/raptor-templates", function(require, exports, module, __filename, __dirname) {
+            exports.RAPTOR_TEMPLATES = true;
+            exports.raptorRenderContext = require('raptor-render-context');
+        });
+        clientImpl.dep("", "raptor-templates", "0.1.0-SNAPSHOT");
+        
+        clientImpl.main("/raptor-templates@0.1.0-SNAPSHOT", "runtime/lib/raptor-templates");
+
+        clientImpl.def("/raptor-render-context@0.1.0-SNAPSHOT/lib/raptor-render-context", function(require, exports, module, __filename, __dirname) {
+            exports.RAPTOR_RENDER_CONTEXT = true;
+        });
+
+        clientImpl.main("/raptor-render-context@0.1.0-SNAPSHOT", "lib/raptor-render-context");
+        clientImpl.dep("/$/raptor-templates", "raptor-render-context", "0.1.0-SNAPSHOT");
+
+        clientImpl.run('/', function(require, exports, module, __filename, __dirname) {
+            raptorTemplatesModule = require('raptor-templates');
+        });
+
+        expect(raptorTemplatesModule.RAPTOR_TEMPLATES).to.equal(true);
+        expect(raptorTemplatesModule.raptorRenderContext.RAPTOR_RENDER_CONTEXT).to.equal(true);
+        
+    });
+
+    
 });
