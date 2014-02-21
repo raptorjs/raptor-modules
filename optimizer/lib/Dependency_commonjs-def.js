@@ -14,7 +14,10 @@ module.exports = {
     read: function(context) {
         return transport.defineCode(
             this.path, 
-            fs.createReadStream(this._file, {encoding: 'utf8'}));
+            fs.createReadStream(this._file, {encoding: 'utf8'}),
+            {
+                additionalVars: this._additionalVars
+            });
     },
 
     lastModified: function() {

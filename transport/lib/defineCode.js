@@ -2,6 +2,7 @@ var resumer = require('resumer');
 
 function defineCode(path, code, options) {
     var isObject = options && options.object === true;
+    var additionalVars = options && options.additionalVars;
 
     if (!code) {
         throw new Error('"code" argument is required');
@@ -23,6 +24,10 @@ function defineCode(path, code, options) {
 
     if (!isObject) {
         out.queue('function(require, exports, module, __filename, __dirname) { ');
+    }
+
+    if (additionalVars) {
+        out.queue('var ' + additionalVars.join(', ') + '; ');
     }
     
     stream.pipe(out, { end: false });
