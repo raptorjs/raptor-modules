@@ -106,6 +106,7 @@ function loadBrowserOverridesHelper(dirname) {
 
 getBrowserOverrides = function(dirname) {
     ok(dirname, '"dirname" is required');
+    ok(typeof dirname === 'string', '"dirname" must be a string');
     
     var browserOverrides = browserOverridesByDir[dirname];
 

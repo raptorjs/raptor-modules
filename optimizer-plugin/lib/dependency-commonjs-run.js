@@ -1,5 +1,5 @@
 var transport = require('../../transport');
-var fs = require('fs');
+var invokeReader = require('./invoke-reader');
 
 module.exports = {
     properties: {
@@ -13,7 +13,7 @@ module.exports = {
     read: function(context) {
         return transport.runCode(
             this.path, 
-            fs.createReadStream(this._file, {encoding: 'utf8'}));
+            invokeReader.stream(this._file, context, this._reader));
     },
 
     lastModified: function() {

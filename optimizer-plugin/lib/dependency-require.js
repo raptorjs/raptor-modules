@@ -6,13 +6,15 @@ var extend = require('raptor-util').extend;
 
 var detective = require('detective');
 var fs = require('fs');
-var raptorPromises = require('raptor-promises');
+
 var logger = require('raptor-logging').logger(module);
-var raptorModulesOptimizer = require('./index');
+var plugin = require('./raptor-optimizer-plugin');
 var ok = require('assert').ok;
 var thenFS = require('then-fs');
 var VAR_REQUIRE_PROCESS = 'process=require("process")';
 var processRegExp = /process\./;
+var raptorPromises = require('raptor-promises');
+var invokeReader = require('./invoke-reader');
 
 function lastModified(path) {
     var promise = thenFS.stat(path).then(function(stat) {
@@ -22,7 +24,7 @@ function lastModified(path) {
     return raptorPromises.resolved(promise);
 }
 
-function inspectSource(resolved, context) {
+function inspectSource(resolved, context, reader) {
     if (resolved.isDir) {
         return raptorPromises.resolved();
     }
@@ -30,29 +32,23 @@ function inspectSource(resolved, context) {
     var path = resolved.filePath;
 
     function doInspect() {
-        var deferred = raptorPromises.defer();
-        fs.readFile(path, {encoding: 'utf8'}, function(err, src) {
-            if (err) {
-                return deferred.reject(err);
-            }
+        return invokeReader.defer(path, context, reader)
+            .then(function(src) {
+                var process = processRegExp.test(src);
+                var requires = detective(src);
 
-            var process = processRegExp.test(src);
-            var requires = detective(src);
+                var result = {};
 
-            var result = {};
+                if (requires && requires.length) {
+                    result.requires = requires;
+                }
 
-            if (requires && requires.length) {
-                result.requires = requires;
-            }
+                if (process) {
+                    result.process = true;
+                }
 
-            if (process) {
-                result.process = true;
-            }
-
-            deferred.resolve(result);
-        });
-
-        return deferred.promise;
+                return result;
+            });
     }
     
     if (context && context.cache) {
@@ -73,8 +69,6 @@ function inspectSource(resolved, context) {
                     }
                 });
             });
-        
-        
     } else {
         return doInspect();
     }
@@ -88,13 +82,17 @@ module.exports = {
         resolvedPath: 'string',
         from: 'string',
         async: 'string',
-        run: 'boolean'
+        run: 'boolean',
+        reader: 'function'
     },
 
     init: function() {
         if (!this.resolvedPath) {
             this.from = this.from || this.getParentManifestDir();
         }
+
+        this._reader = this._reader || this.reader;
+        delete this.reader;
         
         this._resolved = this.resolvedPath ? 
             getPathInfo(this.resolvedPath) :
@@ -123,10 +121,9 @@ module.exports = {
         ok(context, '"context" argument expected');
 
         var resolved = this._resolved;
+        var reader = this._reader;
 
-        var path = this.path;
-
-        return inspectSource(resolved, context)
+        return inspectSource(resolved, context, reader)
             .then(function(inspect) {
                 var requires;
                 var processRequired = false;
@@ -136,16 +133,12 @@ module.exports = {
                     processRequired = inspect.process;
                 }
 
-                if (path === 'process' || path === 'raptor-render-context') {
-                    console.log('PROCESS PATH INFO: ', resolved);
-                }
-
                 var dependencies = [];
                 var dep = resolved.dep;
                 var main = resolved.main;
                 var remap = resolved.remap;
 
-                if (raptorModulesOptimizer.INCLUDE_CLIENT !== false) {
+                if (plugin.INCLUDE_CLIENT !== false) {
                     dependencies.push({
                         type: 'package',
                         path: nodePath.join(__dirname, '../../client/optimizer.json')
@@ -184,7 +177,8 @@ module.exports = {
                             type: 'commonjs-run',
                             path: resolved.logicalPath,
                             _file: resolved.filePath,
-                            _additionalVars: additionalVars
+                            _additionalVars: additionalVars,
+                            _reader: reader
                         });
                     }
                     else {
@@ -192,15 +186,14 @@ module.exports = {
                             type: 'commonjs-def',
                             path: resolved.realPath,
                             _file: resolved.filePath,
-                            _additionalVars: additionalVars
+                            _additionalVars: additionalVars,
+                            _reader: reader
                         });
                     }
 
 
                     // Include all additional dependencies
                     if (requires && requires.length) {
-                        
-
                         var from = nodePath.dirname(resolved.filePath);
 
                         if (logger.isDebugEnabled()) {

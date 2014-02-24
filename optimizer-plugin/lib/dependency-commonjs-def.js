@@ -1,6 +1,6 @@
 var transport = require('../../transport');
-var fs = require('fs');
 var nodePath = require('path');
+var invokeReader = require('./invoke-reader');
 
 module.exports = {
     properties: {
@@ -14,7 +14,7 @@ module.exports = {
     read: function(context) {
         return transport.defineCode(
             this.path, 
-            fs.createReadStream(this._file, {encoding: 'utf8'}),
+            invokeReader.stream(this._file, context, this._reader),
             {
                 additionalVars: this._additionalVars
             });

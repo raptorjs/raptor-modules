@@ -21,7 +21,8 @@
     "detective": "~2.2.0",
     "raptor-promises": "0.1.0-SNAPSHOT",
     "then-fs": "~1.0.4",
-    "process": "~0.6.0"
+    "process": "~0.6.0",
+    "event-stream": "~3.1.0"
   },
   "devDependencies": {
     "mocha": "~1.15.1",

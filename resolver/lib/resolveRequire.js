@@ -7,12 +7,14 @@ var moduleUtil = require('../../util');
 
 function resolveRequire(target, from) {
     ok(target, '"target" is required');
+    ok(typeof target === 'string', '"target" must be a string');
     ok(from, '"from" is required');
+    ok(typeof from === 'string', '"from" must be a string');
 
     var resolvedPath;
     var stat;
 
-    if (target.charAt(0) === '/' || target.indexOf(':/') !== -1) {
+    if (target.charAt(0) === '/' || target.indexOf(':\\') !== -1) {
         try {
             stat = fs.statSync(target);
             resolvedPath = target;

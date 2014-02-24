@@ -32,3 +32,5 @@ module.exports = function plugin(optimizer, config) {
         }
     });
 };
+
+module.exports.INCLUDE_CLIENT = true;
