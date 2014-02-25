@@ -122,6 +122,7 @@ module.exports = {
 
         var resolved = this._resolved;
         var reader = this._reader;
+        var run = this.run === true;
 
         return inspectSource(resolved, context, reader)
             .then(function(inspect) {
@@ -154,10 +155,16 @@ module.exports = {
                 }
 
                 if (main) {
-                    dependencies.push({
+                    var mainRequire = {
                         type: 'require',
                         resolvedPath: main.filePath
-                    });
+                    };
+
+                    if (run) {
+                        mainRequire.run = true;
+                    }
+
+                    dependencies.push(mainRequire);
 
                     dependencies.push({
                         type: 'commonjs-main',
@@ -172,7 +179,8 @@ module.exports = {
                     if (processRequired) {
                         additionalVars = [VAR_REQUIRE_PROCESS];
                     }
-                    if (this.run) {
+
+                    if (run) {
                         dependencies.push({
                             type: 'commonjs-run',
                             path: resolved.logicalPath,
@@ -180,8 +188,7 @@ module.exports = {
                             _additionalVars: additionalVars,
                             _reader: reader
                         });
-                    }
-                    else {
+                    } else {
                         dependencies.push({
                             type: 'commonjs-def',
                             path: resolved.realPath,
