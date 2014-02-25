@@ -18,5 +18,9 @@ module.exports = {
 
     lastModified: function() {
         return this.resourceLastModified(this._file);
+    },
+
+    getSourceFile: function() {
+        return this._file;
     }
 };
