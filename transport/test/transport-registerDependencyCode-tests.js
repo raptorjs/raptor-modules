@@ -54,7 +54,7 @@ describe('raptor-modules/transport.registerDependencyCode' , function() {
             code += data;
         });
         out.on('end', function() {
-            expect(code).to.equal('$rmod.dep("", "foo", "1.0.0", "foo-browserify");');
+            expect(code).to.equal('$rmod.dep("", "foo-browserify", "1.0.0", "foo");');
             done();
         });
     });

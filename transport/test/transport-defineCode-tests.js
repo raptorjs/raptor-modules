@@ -41,6 +41,7 @@ describe('raptor-modules/transport.defineCode' , function() {
             code += data;
         });
         out.on('end', function() {
+            console.log("CODE: ", code);
             expect(code).to.equal('$rmod.def("/some/path", { "hello": "world" });');
             done();
         });

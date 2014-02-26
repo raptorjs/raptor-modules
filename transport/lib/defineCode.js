@@ -28,7 +28,10 @@ function defineCode(path, code, options) {
     out.queue(part0);
     out.queue(JSON.stringify(path));
 
-    if (!isObject) {
+    if (isObject) {
+        out.queue(', ');
+        
+    } else {
         out.queue(part1a);
         if (additionalVars) {
             out.queue('var ' + additionalVars.join(', ') + '; ');
@@ -67,7 +70,9 @@ module.exports.sync = function(path, code, options) {
     out.push(part0);
     out.push(JSON.stringify(path));
 
-    if (!isObject) {
+    if (isObject) {
+        out.queue(', ');
+    } else {
         out.push(part1a);
         if (additionalVars) {
             out.push('var ' + additionalVars.join(', ') + '; ');
