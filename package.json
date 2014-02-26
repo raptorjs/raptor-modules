@@ -1,6 +1,6 @@
 {
   "name": "raptor-modules",
-  "version": "0.1.0-SNAPSHOT",
+  "version": "0.2.0-beta",
   "description": "Provides support for the CommonJS module system and other module systems",
   "repository": {
     "type": "git",
@@ -9,17 +9,17 @@
   "scripts": {
     "test": "node_modules/.bin/mocha --ui bdd --reporter spec ./test && node_modules/.bin/mocha --ui bdd --reporter spec ./transport/test && node_modules/.bin/mocha --ui bdd --reporter spec ./client/test && node_modules/.bin/mocha --ui bdd --reporter spec ./optimizer/test && node_modules/.bin/mocha --ui bdd --reporter spec ./resolver/test"
   },
-  "author": "Patrick Steele-Idem <psteeleidem@ebay.com>",
-  "maintainers": "Patrick Steele-Idem <psteeleidem@ebay.com>",
+  "author": "Patrick Steele-Idem <pnidem@gmail.com>",
+  "maintainers": "Patrick Steele-Idem <pnidem@gmail.com>",
   "dependencies": {
     "app-module-path": "~0.1.0",
-    "raptor-detect": "~0.1.0-SNAPSHOT",
-    "raptor-ecma": "~0.1.0-SNAPSHOT",
-    "raptor-util": "~0.1.0-SNAPSHOT",
-    "raptor-logging": "~0.1.0-SNAPSHOT",
+    "raptor-detect": "^0.2.0-beta",
+    "raptor-ecma": "^0.2.0-beta",
+    "raptor-util": "^0.2.0-beta",
+    "raptor-logging": "^0.2.0-beta",
     "resumer": "0.0.0",
     "detective": "~2.2.0",
-    "raptor-promises": "0.1.0-SNAPSHOT",
+    "raptor-promises": "^0.2.0-beta",
     "then-fs": "~1.0.4",
     "process": "~0.6.0",
     "event-stream": "~3.1.0"
