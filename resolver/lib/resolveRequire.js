@@ -5,7 +5,7 @@ var nodePath = require('path');
 var searchPath = require('./search-path');
 var moduleUtil = require('../../util');
 
-function resolveRequire(target, from) {
+function resolveRequire(target, from, options) {
     ok(target, '"target" is required');
     ok(typeof target === 'string', '"target" must be a string');
     ok(from, '"from" is required');
@@ -72,7 +72,7 @@ function resolveRequire(target, from) {
     }
     
     if (resolvedPath) {
-        var pathInfo = moduleUtil.getPathInfo(resolvedPath);
+        var pathInfo = moduleUtil.getPathInfo(resolvedPath, options);
         return pathInfo;
     }
     else {

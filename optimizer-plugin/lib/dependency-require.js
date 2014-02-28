@@ -82,6 +82,7 @@ module.exports = {
         resolvedPath: 'string',
         from: 'string',
         async: 'string',
+        root: 'string',
         run: 'boolean',
         reader: 'function'
     },
@@ -93,10 +94,17 @@ module.exports = {
 
         this._reader = this._reader || this.reader;
         delete this.reader;
+
+        var options;
+        if (this.root) {
+            options = {
+                root: this.root
+            };
+        }
         
         this._resolved = this.resolvedPath ? 
-            getPathInfo(this.resolvedPath) :
-            resolveRequire(this.path, this.from);
+            getPathInfo(this.resolvedPath, options) :
+            resolveRequire(this.path, this.from, options);
     },
     
     getDir: function() {
@@ -123,6 +131,7 @@ module.exports = {
         var resolved = this._resolved;
         var reader = this._reader;
         var run = this.run === true;
+        var root = this.root;
 
         return inspectSource(resolved, context, reader)
             .then(function(inspect) {
@@ -150,7 +159,8 @@ module.exports = {
                     dependencies.push({
                         type: 'require',
                         path: 'process',
-                        from: __dirname
+                        from: __dirname,
+                        root: '../../' // Simulate a top-level installed module
                     });
                 }
 
@@ -162,6 +172,10 @@ module.exports = {
 
                     if (run) {
                         mainRequire.run = true;
+                    }
+
+                    if (root) {
+                        mainRequire.root = root;
                     }
 
                     dependencies.push(mainRequire);

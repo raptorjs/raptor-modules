@@ -32,13 +32,11 @@ function removeRegisteredExt(path) {
 
 function getPathInfo(path, options) {
     ok(typeof path === 'string', 'path should be a string');
-    
-    var removeExt = true;
-    if (options) {
-        removeExt = options.removeExt !== false;
-    }
+    options = options || {};
 
-    var root = getProjectRootDir(path);
+    var removeExt = options.removeExt !== false;
+
+    var root = options.root || getProjectRootDir(path);
     path = path.replace(/[\\]/g, '/');
 
     var lastNodeModules = path.lastIndexOf('node_modules/');
