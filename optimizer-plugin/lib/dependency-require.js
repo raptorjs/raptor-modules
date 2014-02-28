@@ -15,6 +15,7 @@ var VAR_REQUIRE_PROCESS = 'process=require("process")';
 var processRegExp = /process\./;
 var raptorPromises = require('raptor-promises');
 var invokeReader = require('./invoke-reader');
+var moduleRoot = nodePath.join(__dirname, '../../');
 
 function lastModified(path) {
     var promise = thenFS.stat(path).then(function(stat) {
@@ -160,7 +161,7 @@ module.exports = {
                         type: 'require',
                         path: 'process',
                         from: __dirname,
-                        root: '../../' // Simulate a top-level installed module
+                        root: moduleRoot // Simulate a top-level installed module
                     });
                 }
 

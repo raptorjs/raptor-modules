@@ -126,7 +126,7 @@ function getPathInfo(path, options) {
 
                 ok(targetFile, 'targetFile is null');
 
-                overridePathInfo = getPathInfo(targetFile);
+                overridePathInfo = getPathInfo(targetFile, options);
                 overridePathInfo.isBrowserOverride = true;
                 overridePathInfo.remap = remap;
                 return overridePathInfo;
