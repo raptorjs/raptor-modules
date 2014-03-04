@@ -18,10 +18,8 @@
         "raptor-util": "^0.2.0-beta",
         "raptor-logging": "^0.2.0-beta",
         "resumer": "0.0.0",
-        "detective": "~2.2.0",
         "raptor-promises": "^0.2.0-beta",
         "then-fs": "~1.0.4",
-        "process": "~0.6.0",
         "event-stream": "~3.1.0"
     },
     "devDependencies": {

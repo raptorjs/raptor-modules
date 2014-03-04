@@ -17,7 +17,7 @@ function serverResolveRequire(target, from) {
         return target;
     }
     
-    return searchPath.find(target, from, function(path) {
+    var result = searchPath.find(target, from, function(path) {
 
         var dirname = nodePath.dirname(path);
         if (nodePath.basename(dirname) !== 'node_modules' && moduleUtil.isDirCached(dirname)) {
@@ -39,6 +39,12 @@ function serverResolveRequire(target, from) {
 
         return null;
     });
+
+    if (!result) {
+        throw new Error('Module not found: ' + target + ' (from: ' + from + ')');
+    }
+
+    return result;
 }
 
 module.exports = serverResolveRequire;
