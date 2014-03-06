@@ -14,6 +14,15 @@ https://github.com/joyent/node/blob/master/lib/module.js
     // this object stores the module factories with the keys being real paths of module (e.g. "/baz@3.0.0/lib/index" --> Function)
     var definitions = {};
 
+    // The isReady flag is used to determine if "run" modules can
+    // be executed or if they should be deferred until all dependencies
+    // have been loaded
+    var isReady = false;
+
+    // If $rmod.run() is called when the page is not ready then
+    // we queue up the run modules to be executed later
+    var runQueue = [];
+
     // this object stores the Module instance cache with the keys being logical paths of modules (e.g., "/$/foo/$/baz" --> Module)
     var instanceCache = {};
 
@@ -482,10 +491,25 @@ https://github.com/joyent/node/blob/master/lib/module.js
     });
     */
     function run(logicalPath, factory) {
+        if (!isReady) {
+            return runQueue.push(arguments);
+        }
         define(logicalPath, factory);
         var module = new Module([logicalPath, logicalPath]);
         instanceCache[logicalPath] = module;
         module.load(factory);
+    }
+
+    /*
+     * Mark the page as being ready and execute any of the
+     * run modules that were deferred
+     */
+    function ready() {
+        isReady = true;
+        for (var i=0; i<runQueue.length; i++) {
+            run.apply(runQueue, runQueue[i]);
+        }
+        runQueue.length = 0;
     }
 
     /*
@@ -503,7 +527,8 @@ https://github.com/joyent/node/blob/master/lib/module.js
         remap: remap,
         require: require,
         resolve: resolve,
-        join: join
+        join: join,
+        ready: ready
     };
 
     if (typeof window === 'undefined') {
