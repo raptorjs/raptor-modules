@@ -1,5 +1,4 @@
 {
-    "path": "/Users/psteeleidem/development/github/raptorjs3/raptor-modules/package.json",
     "name": "raptor-modules",
     "description": "Provides support for the CommonJS module system and other module systems",
     "repository": {
@@ -32,5 +31,5 @@
     "publishConfig": {
         "registry": "https://registry.npmjs.org/"
     },
-    "version": "0.2.3-beta"
+    "version": "0.2.4-beta"
 }
