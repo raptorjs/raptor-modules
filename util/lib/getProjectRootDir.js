@@ -1,9 +1,15 @@
 require('raptor-ecma/es6');
 var fs = require('fs');
 var nodePath = require('path');
-
 var cachedProjectRootDirs = {};
 var packageReader = require('./package-reader');
+var cwd = process.cwd();
+var rootPackage = nodePath.join(cwd, 'package.json')
+var projectRootDir = null;
+
+if (fs.existsSync(rootPackage)) {
+    projectRootDir = nodePath.dirname(rootPackage);
+}
 
 function findRootDir(dirname) {
     if (dirname === '' || dirname === '/') {
@@ -31,6 +37,12 @@ function findRootDir(dirname) {
 }
 
 function getProjectRootDir(path) {
+
+    if (projectRootDir) {
+        // Use the CWD to avoid issues with linking in Node.js modules that are outside the project root
+        return projectRootDir;
+    }
+
     var rootDir;
     for (rootDir in cachedProjectRootDirs) {
         if (cachedProjectRootDirs.hasOwnProperty(rootDir)) {

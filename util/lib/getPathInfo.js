@@ -1,3 +1,4 @@
+require('raptor-ecma/es6');
 var nodePath = require('path');
 var ok = require('assert').ok;
 
@@ -5,6 +6,7 @@ var fs = require('fs');
 var raptorModulesUtil = require('../../util');
 var raptorModulesResolver = require('../../resolver');
 var getProjectRootDir = raptorModulesUtil.getProjectRootDir;
+var getModuleRootPackage = raptorModulesUtil.getModuleRootPackage;
 var findMain = raptorModulesUtil.findMain;
 var getBrowserOverrides = require('./browser-overrides').getBrowserOverrides;
 
@@ -40,38 +42,67 @@ function getPathInfo(path, options) {
     path = path.replace(/[\\]/g, '/');
 
     var lastNodeModules = path.lastIndexOf('node_modules/');
-    var logicalPath = normalizeDepDirnames(path.substring(root.length));
+    var logicalPath;
     var realPath;
     var moduleRootDir;
     var dep;
     var packagePath;
-
     var stat = fs.statSync(path);
+    var name;
+    var version;
+    var basePath;
 
-    if (lastNodeModules !== -1) {
-        var nodeModulesDir = path.substring(0, lastNodeModules + 'node_modules/'.length);
+    if (path.startsWith(root)) {
+        logicalPath = normalizeDepDirnames(path.substring(root.length));
 
-        var moduleNameEnd = path.indexOf('/', nodeModulesDir.length);
-        if (moduleNameEnd === -1) {
-            moduleNameEnd = path.length;
+        if (lastNodeModules !== -1) {
+            var nodeModulesDir = path.substring(0, lastNodeModules + 'node_modules/'.length);
+
+            var moduleNameEnd = path.indexOf('/', nodeModulesDir.length);
+            if (moduleNameEnd === -1) {
+                moduleNameEnd = path.length;
+            }
+            moduleRootDir = path.substring(0, moduleNameEnd);
+            packagePath = nodePath.join(path.substring(0, moduleNameEnd), 'package.json');
+            var pkg = require(packagePath);
+            name = pkg.name;
+            version = pkg.version;
+            
+            basePath = '/' + name + '@' + version;
+            realPath = normalizeDepDirnames(basePath + path.substring(moduleNameEnd));
+
+            dep = {
+                parentPath: normalizeDepDirnames(nodePath.dirname(nodeModulesDir).substring(root.length)),
+                childName: name,
+                childVersion: version
+            };
+        } else {
+            realPath = logicalPath;
         }
-        moduleRootDir = path.substring(0, moduleNameEnd);
-        packagePath = nodePath.join(path.substring(0, moduleNameEnd), 'package.json');
-        var pkg = require(packagePath);
-        var name = pkg.name;
-        var version = pkg.version;
-        
-        var basePath = '/' + name + '@' + version;
-        realPath = normalizeDepDirnames(basePath + path.substring(moduleNameEnd));
+    } else {
+
+        // The module must be linked in so treat it as a top-level installed
+        // dependency since we have no way of knowing which dependency this module belongs to
+        // based on the given path
+        var moduleRootPkg = getModuleRootPackage(path);
+        name = moduleRootPkg.name;
+        version = moduleRootPkg.version;
+
+
+        basePath = '/' + name + '@' + version;
+        realPath = normalizeDepDirnames(basePath + path.substring(moduleRootPkg.__dirname.length));
+        logicalPath = name + path.substring(moduleRootPkg.__dirname.length);
 
         dep = {
-            parentPath: normalizeDepDirnames(nodePath.dirname(nodeModulesDir).substring(root.length)),
+            parentPath: '',
             childName: name,
             childVersion: version
         };
-    } else {
-        realPath = logicalPath;
+
+        // console.log('RESOLVE LINKED MODULE: ', '\npath: ', path, '\nrealPath: ', realPath, '\nlogicalPath: ', logicalPath, '\ndep: ', dep, '\nmoduleRootPkg.__dirname: ', moduleRootPkg.__dirname);
     }
+
+    
 
     var isDir = stat.isDirectory();
     var main;
