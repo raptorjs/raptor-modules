@@ -39,7 +39,7 @@ function resolveRequire(target, from, options) {
 
             if (remappedModule) {
                 // console.log('BROWSER OVERRIDE: ', remappedModule);
-                browserOverride = resolveRequire(remappedModule.name, remappedModule.from);
+                browserOverride = resolveRequire(remappedModule.name, remappedModule.from, options);
                 browserOverride.dep.childName = target;
                 browserOverride.dep.remap = remappedModule.name;
                 browserOverride.isBrowserOverride = true;

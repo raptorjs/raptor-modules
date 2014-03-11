@@ -23,7 +23,7 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));
         var resolver = require('../');
         var from = nodePath.join(__dirname, 'test-project');
-        var pathInfo = resolver.resolveRequire('foo', from);
+        var pathInfo = resolver.resolveRequire('foo', from, {root: nodePath.join(__dirname, "test-project")});
 
         expect(pathInfo).to.deep.equal({
             logicalPath: '/$/foo',
@@ -46,7 +46,7 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));
         var resolver = require('../');
         var from = nodePath.join(__dirname, 'test-project');
-        var pathInfo = resolver.resolveRequire('foo/lib/index', from);
+        var pathInfo = resolver.resolveRequire('foo/lib/index', from, {root: nodePath.join(__dirname, "test-project")});
         expect(pathInfo).to.deep.equal({
             logicalPath: '/$/foo/lib/index',
             realPath: '/foo@1.0.0/lib/index',
@@ -64,7 +64,7 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));
         var resolver = require('../');
         var from = nodePath.join(__dirname, 'test-project/src');
-        var pathInfo = resolver.resolveRequire('./hello-world', from);
+        var pathInfo = resolver.resolveRequire('./hello-world', from, {root: nodePath.join(__dirname, "test-project")});
         expect(pathInfo).to.deep.equal({
             logicalPath: '/src/hello-world',
             realPath: '/src/hello-world',
@@ -81,7 +81,7 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));
         var resolver = require('../');
         var from = nodePath.join(__dirname, 'test-project/node_modules/foo/lib');
-        var pathInfo = resolver.resolveRequire('./', from);
+        var pathInfo = resolver.resolveRequire('./', from, {root: nodePath.join(__dirname, "test-project")});
         expect(pathInfo).to.deep.equal({
             logicalPath: '/$/foo/lib',
             realPath: '/foo@1.0.0/lib',
@@ -103,7 +103,7 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));
         var resolver = require('../');
         var from = nodePath.join(__dirname, 'test-project/src');
-        var pathInfo = resolver.resolveRequire('browser-overrides/main/sub/sub', from);
+        var pathInfo = resolver.resolveRequire('browser-overrides/main/sub/sub', from, {root: nodePath.join(__dirname, "test-project")});
         expect(pathInfo).to.deep.equal({
 
             logicalPath: '/$/browser-overrides/main/sub/sub_browser',
@@ -127,7 +127,7 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));
         var resolver = require('../');
         var from = nodePath.join(__dirname, 'test-project/src');
-        var pathInfo = resolver.resolveRequire('browser-overrides/override-files', from);
+        var pathInfo = resolver.resolveRequire('browser-overrides/override-files', from, {root: nodePath.join(__dirname, "test-project")});
         expect(pathInfo).to.deep.equal({
 
             logicalPath: '/$/browser-overrides/override-files',
@@ -150,7 +150,7 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));
         var resolver = require('../');
         var from = nodePath.join(__dirname, 'test-project/src');
-        var pathInfo = resolver.resolveRequire('browser-overrides/override-files/hello', from);
+        var pathInfo = resolver.resolveRequire('browser-overrides/override-files/hello', from, {root: nodePath.join(__dirname, "test-project")});
         expect(pathInfo).to.deep.equal({
 
             logicalPath: '/$/browser-overrides/override-files/hello_browser',
@@ -174,7 +174,7 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));
         var resolver = require('../');
         var from = nodePath.join(__dirname, 'test-project/src');
-        var pathInfo = resolver.resolveRequire('browser-overrides/override-files/hello/world', from);
+        var pathInfo = resolver.resolveRequire('browser-overrides/override-files/hello/world', from, {root: nodePath.join(__dirname, "test-project")});
         expect(pathInfo).to.deep.equal({
 
             logicalPath: '/$/browser-overrides/override-files/hello/world_browser',
@@ -198,7 +198,7 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));
         var resolver = require('../');
         var from = nodePath.join(__dirname, 'test-project/browser-overrides/override-files');
-        var pathInfo = resolver.resolveRequire('browser-overrides/override-files/hello-world', from);
+        var pathInfo = resolver.resolveRequire('browser-overrides/override-files/hello-world', from, {root: nodePath.join(__dirname, "test-project")});
         expect(pathInfo).to.deep.equal({
 
             logicalPath: '/$/browser-overrides/$/hello-world-browserify/index',
@@ -222,7 +222,7 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));
         var resolver = require('../');
         var from = nodePath.join(__dirname, 'test-project/node_modules/browser-overrides/override-files');
-        var pathInfo = resolver.resolveRequire('hello-world', from);
+        var pathInfo = resolver.resolveRequire('hello-world', from, {root: nodePath.join(__dirname, "test-project")});
         // console.log(JSON.stringify(pathInfo, null, '    '));
         expect(pathInfo).to.deep.equal({
 
@@ -250,7 +250,7 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         var from = nodePath.join(__dirname, 'test-project/node_modules/bar');
         var e = null;
         try {
-            resolver.resolveRequire('hello-world', from);
+            resolver.resolveRequire('hello-world', from, {root: nodePath.join(__dirname, "test-project")});
         }
         catch(_e) {
             e = _e;

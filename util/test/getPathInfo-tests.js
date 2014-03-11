@@ -22,7 +22,7 @@ describe('raptor-modules/util.getPathInfo' , function() {
     it('should resolve path info correctly for top-level installed modules', function() {
         var util = require('../');
         var path = nodePath.join(__dirname, "test-project/node_modules/foo/lib/index.js");
-        var pathInfo = util.getPathInfo(path);
+        var pathInfo = util.getPathInfo(path, {root: nodePath.join(__dirname, "test-project")});
         expect(pathInfo).to.deep.equal({
             logicalPath: '/$/foo/lib/index',
             realPath: '/foo@1.0.0/lib/index',
@@ -42,7 +42,7 @@ describe('raptor-modules/util.getPathInfo' , function() {
         var pathInfo;
 
         path = nodePath.join(__dirname, "test-project/node_modules/foo");
-        pathInfo = util.getPathInfo(path);
+        pathInfo = util.getPathInfo(path, {root: nodePath.join(__dirname, "test-project")});
         expect(pathInfo).to.deep.equal({
             logicalPath: '/$/foo',
             realPath: '/foo@1.0.0',
@@ -60,7 +60,7 @@ describe('raptor-modules/util.getPathInfo' , function() {
         });
 
         path = nodePath.join(__dirname, "test-project/node_modules/bar");
-        pathInfo = util.getPathInfo(path);
+        pathInfo = util.getPathInfo(path, {root: nodePath.join(__dirname, "test-project")});
         expect(pathInfo).to.deep.equal({
             logicalPath: '/$/bar',
             realPath: '/bar@2.0.0',
@@ -78,7 +78,7 @@ describe('raptor-modules/util.getPathInfo' , function() {
         });
 
         path = nodePath.join(__dirname, "test-project/src/hello-world");
-        pathInfo = util.getPathInfo(path);
+        pathInfo = util.getPathInfo(path, {root: nodePath.join(__dirname, "test-project")});
         expect(pathInfo).to.deep.equal({
             logicalPath: '/src/hello-world',
             realPath: '/src/hello-world',
@@ -94,7 +94,7 @@ describe('raptor-modules/util.getPathInfo' , function() {
     it('should resolve path info correctly for second-level installed modules', function() {
         var util = require('../');
         var path = nodePath.join(__dirname, "test-project/node_modules/foo/node_modules/baz/lib/index.js");
-        var pathInfo = util.getPathInfo(path);
+        var pathInfo = util.getPathInfo(path, {root: nodePath.join(__dirname, "test-project")});
         expect(pathInfo).to.deep.equal({
             logicalPath: '/$/foo/$/baz/lib/index',
             realPath: '/baz@3.0.0/lib/index',
@@ -111,7 +111,7 @@ describe('raptor-modules/util.getPathInfo' , function() {
     it('should resolve path info correctly for application modules', function() {
         var util = require('../');
         var path = nodePath.join(__dirname, "test-project/src/hello-world/index.js");
-        var pathInfo = util.getPathInfo(path);
+        var pathInfo = util.getPathInfo(path, {root: nodePath.join(__dirname, "test-project")});
         expect(pathInfo).to.deep.equal({
             logicalPath: '/src/hello-world/index',
             realPath: '/src/hello-world/index',
@@ -123,7 +123,7 @@ describe('raptor-modules/util.getPathInfo' , function() {
     it('should handle browser override for main script', function() {
         require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));
         var resolver = require('../');
-        var pathInfo = resolver.getPathInfo(nodePath.join(__dirname, 'test-project/node_modules/browser-overrides/main/index.js'));
+        var pathInfo = resolver.getPathInfo(nodePath.join(__dirname, 'test-project/node_modules/browser-overrides/main/index.js'), {root: nodePath.join(__dirname, "test-project")});
         expect(pathInfo).to.deep.equal({
             remap: {
                 from: '/browser-overrides@0.0.0/main/index',
