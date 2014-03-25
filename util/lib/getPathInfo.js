@@ -128,7 +128,7 @@ function getPathInfo(path, options) {
 
         var browserOverrides = getBrowserOverrides(dirname);
         if (browserOverrides) {
-            var browserOverride = browserOverrides.getRemappedModuleInfo(path);
+            var browserOverride = browserOverrides.getRemappedModuleInfo(path, options);
 
             if (browserOverride) {
                 var overridePathInfo;

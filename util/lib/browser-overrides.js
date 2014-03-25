@@ -39,7 +39,7 @@ BrowserOverrides.prototype = {
         }
     },
 
-    getRemappedModuleInfo: function(requested) {
+    getRemappedModuleInfo: function(requested, options) {
         var target = this.targetCache[requested];
         if (target === undefined) {
 
@@ -50,7 +50,7 @@ BrowserOverrides.prototype = {
                 if (target) {
 
                     if (target.startsWith('.')) {
-                        var resolved = resolver.resolveRequire(target, current.dirname);
+                        var resolved = resolver.resolveRequire(target, current.dirname, options);
                         target = {
                             filePath: resolved.filePath
                         };
