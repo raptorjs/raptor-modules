@@ -44,9 +44,7 @@ function getPathInfo(path, options) {
     var lastNodeModules = path.lastIndexOf('node_modules/');
     var logicalPath;
     var realPath;
-    var moduleRootDir;
     var dep;
-    var packagePath;
     var stat = fs.statSync(path);
     var name;
     var version;
@@ -62,9 +60,8 @@ function getPathInfo(path, options) {
             if (moduleNameEnd === -1) {
                 moduleNameEnd = path.length;
             }
-            moduleRootDir = path.substring(0, moduleNameEnd);
-            packagePath = nodePath.join(path.substring(0, moduleNameEnd), 'package.json');
-            var pkg = require(packagePath);
+            
+            var pkg = getModuleRootPackage(path);
             name = pkg.name;
             version = pkg.version;
             
