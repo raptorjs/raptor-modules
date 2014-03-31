@@ -77,7 +77,7 @@ describe('raptor-modules/transport.defineCode' , function() {
 
     it('should support "globalName" option', function(done) {
         var transport = require('../');
-        var out = transport.defineCode('/some/path', 'exports.test=true;', {globalName: '$'});
+        var out = transport.defineCode('/some/path', 'exports.test=true;', {globals: ['$']});
         var code = '';
         out.on('data', function(data) {
             code += data;
