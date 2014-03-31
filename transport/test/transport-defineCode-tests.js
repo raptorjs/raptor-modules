@@ -61,6 +61,20 @@ describe('raptor-modules/transport.defineCode' , function() {
         });
     });
 
+    it('should handle Stream argument for factory function code with run set to true', function(done) {
+        var transport = require('../');
+        var stream = fs.createReadStream(nodePath.join(__dirname, 'test.js'), {encoding: 'utf8'});
+        var out = transport.runCode('/some/path', stream);
+        var code = '';
+        out.on('data', function(data) {
+            code += data;
+        });
+        out.on('end', function() {
+            expect(code).to.equal('$rmod.run("/some/path", function(require, exports, module, __filename, __dirname) { exports.test=true; });');
+            done();
+        });
+    });
+
     it('should handle Stream argument for object code', function(done) {
         var transport = require('../');
         var stream = fs.createReadStream(nodePath.join(__dirname, 'test.json'), {encoding: 'utf8'});
