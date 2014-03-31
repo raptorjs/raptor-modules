@@ -135,6 +135,34 @@ https://github.com/joyent/node/blob/master/lib/module.js
         definitions[realPath] = factoryOrObject;
     }
 
+    /*
+    $rmod.run('/src/ui-pages/login/login-page', function(require, exports, module, __filename, __dirname) {
+        // module source code goes here
+    });
+    */
+    function run(logicalPath, factory) {
+        if (!isReady) {
+            return runQueue.push(arguments);
+        }
+        define(logicalPath, factory);
+        var module = new Module([logicalPath, logicalPath]);
+        instanceCache[logicalPath] = module;
+        module.load(factory);
+    }
+
+    /*
+     * Mark the page as being ready and execute any of the
+     * run modules that were deferred
+     */
+    function ready() {
+        isReady = true;
+        for (var i=0; i<runQueue.length; i++) {
+            run.apply(runQueue, runQueue[i]);
+        }
+        runQueue.length = 0;
+    }
+
+
     function registerMain(realPath, relativePath) {
         mains[realPath] = relativePath;
     }
@@ -483,33 +511,6 @@ https://github.com/joyent/node/blob/master/lib/module.js
         module.load(factoryOrObject);
 
         return module.exports;
-    }
-
-    /*
-    $rmod.run('/src/ui-pages/login/login-page', function(require, exports, module, __filename, __dirname) {
-        // module source code goes here
-    });
-    */
-    function run(logicalPath, factory) {
-        if (!isReady) {
-            return runQueue.push(arguments);
-        }
-        define(logicalPath, factory);
-        var module = new Module([logicalPath, logicalPath]);
-        instanceCache[logicalPath] = module;
-        module.load(factory);
-    }
-
-    /*
-     * Mark the page as being ready and execute any of the
-     * run modules that were deferred
-     */
-    function ready() {
-        isReady = true;
-        for (var i=0; i<runQueue.length; i++) {
-            run.apply(runQueue, runQueue[i]);
-        }
-        runQueue.length = 0;
     }
 
     /*
