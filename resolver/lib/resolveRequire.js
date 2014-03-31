@@ -74,9 +74,10 @@ function resolveRequire(target, from, options) {
     if (resolvedPath) {
         var pathInfo = moduleUtil.getPathInfo(resolvedPath, options);
         return pathInfo;
-    }
-    else {
-        throw new Error('Module not found: ' + target + ' (from: ' + from + ')');
+    } else {
+        var e = new Error('Module not found: ' + target + ' (from: ' + from + ')');
+        e.moduleNotFound = true;
+        throw e;
     }
 }
 

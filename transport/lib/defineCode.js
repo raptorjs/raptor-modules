@@ -1,80 +1,33 @@
 var resumer = require('resumer');
-
-var part0 = '$rmod.def(';
-var part1a = ', function(require, exports, module, __filename, __dirname) { ';
-var part1b = ' }';
-var part2 = ');';
+var eventStream = require('event-stream');
 
 function defineCode(path, code, options) {
-    var isObject = options && options.object === true;
-    var additionalVars = options && options.additionalVars;
+    var isObject = false;
+    var additionalVars = null;
+    var run = false;
+    var globals = null;
 
-    if (!code) {
-        throw new Error('"code" argument is required');
+    if (options) {
+        isObject = options.object === true;
+        additionalVars = options.additionalVars;
+        run = options.run === true;
+        globals = options.globals;
     }
-
-    var stream;
-
-    if (typeof code === 'string') {
-        // Create a stream with buffered data that will be resumed on process.nextTick()
-        stream = resumer().queue(code).end();
-    }
-    else {
-        // Assume the code is a Stream
-        stream = code;
-    }
-
-    var out = resumer();
-    out.queue(part0);
-    out.queue(JSON.stringify(path));
-
-    if (isObject) {
-        out.queue(', ');
-        
-    } else {
-        out.queue(part1a);
-        if (additionalVars) {
-            out.queue('var ' + additionalVars.join(', ') + '; ');
-        }
-    }
-
     
-    
-    stream.pipe(out, { end: false });
-
-    stream.on('end', function() {
-        if (!isObject) {
-            out.queue(part1b); // End the function wrapper
-        }
-
-        out.queue(part2); // End the function call
-        
-        out.end();
-    });
-
-    return out;
-}
-
-module.exports = defineCode;
-
-module.exports.sync = function(path, code, options) {
-    var isObject = options && options.object === true;
-    var additionalVars = options && options.additionalVars;
-
     if (!code) {
         throw new Error('"code" argument is required');
     }
 
 
     var out = [];
-    out.push(part0);
+    out.push('$rmod.' + (run ? 'run' : 'def') + '(');
     out.push(JSON.stringify(path));
 
     if (isObject) {
-        out.queue(', ');
+        out.push(', ');
     } else {
-        out.push(part1a);
-        if (additionalVars) {
+        out.push(', function(require, exports, module, __filename, __dirname) { ');
+        if (additionalVars && additionalVars.length) {
             out.push('var ' + additionalVars.join(', ') + '; ');
         }
     }
@@ -83,9 +36,45 @@ module.exports.sync = function(path, code, options) {
     out.push(code);
     
     if (!isObject) {
-        out.push(part1b); // End the function wrapper
+        out.push(' }'); // End the function wrapper
+        
+        if (globals) {
+            if (!Array.isArray(globals)) {
+                globals = [globals];
+            }
+
+            if (globals.length) {
+                out.push(', ' + JSON.stringify(globals));    
+            }
+        }
     }
 
-    out.push(part2); // End the function call
+    out.push(');'); // End the function call
     return out.join('');
+}
+
+module.exports = function(path, code, options) {
+    var out = resumer();
+
+    if (code.pipe) {
+        var stream = code;
+        code = '';
+        stream.pipe(eventStream.through(
+            function write(data) {
+                code += data;
+            },
+            function end() {
+                out.queue(defineCode(path, code, options));
+                out.end();
+            }));
+    } else {
+        out.queue(defineCode(path, code, options));
+        out.end();
+    }
+
+    return out;
+};
+
+module.exports.sync = function(path, code, options) {
+    return defineCode(path, code, options);
 };

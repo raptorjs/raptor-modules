@@ -10,6 +10,7 @@ Inspired by:
 https://github.com/joyent/node/blob/master/lib/module.js
 */
 (function() {
+    var win = typeof window === 'undefined' ? null : window;
 
     // this object stores the module factories with the keys being real paths of module (e.g. "/baz@3.0.0/lib/index" --> Function)
     var definitions = {};
@@ -126,13 +127,20 @@ https://github.com/joyent/node/blob/master/lib/module.js
     /**
      * Defines a packages whose metadata is used by raptor-loader to load the package.
      */
-    function define(realPath, factoryOrObject) {
+    function define(realPath, factoryOrObject, globals) {
         /*
         $rmod.def('/baz@3.0.0/lib/index', function(require, exports, module, __filename, __dirname) {
             // module source code goes here
         });
         */
         definitions[realPath] = factoryOrObject;
+
+        if (globals) {
+            var target = win || global;
+            for (var i=0;i<globals.length; i++) {
+                target[globals[i]] = require(realPath, realPath);
+            }
+        }
     }
 
     /*
@@ -532,11 +540,12 @@ https://github.com/joyent/node/blob/master/lib/module.js
         ready: ready
     };
 
-    if (typeof window === 'undefined') {
-        module.exports = $rmod;
+    if (win) {
+        win.$rmod = $rmod;
     } else {
-        window.$rmod = $rmod;
+        module.exports = $rmod;
     }
+
 })();
 
 

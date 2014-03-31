@@ -928,5 +928,18 @@ describe('raptor-modules/client' , function() {
         
     });
 
+    it.only('should allow a module to be mapped to a global', function(done) {
+        var clientImpl = require('../');
+
+        // define a module for a given real path
+        clientImpl.def('/jquery@1.0.0/lib/index', function(require, exports, module, __filename, __dirname) {
+            exports.jquery = true;
+        }, '$');
+
+        expect(global.$.jquery).to.equal(true);
+
+        done();
+    });
+
     
 });

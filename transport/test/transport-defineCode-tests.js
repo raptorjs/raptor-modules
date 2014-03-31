@@ -75,6 +75,18 @@ describe('raptor-modules/transport.defineCode' , function() {
         });
     });
 
+    it('should support "globalName" option', function(done) {
+        var transport = require('../');
+        var out = transport.defineCode('/some/path', 'exports.test=true;', {globalName: '$'});
+        var code = '';
+        out.on('data', function(data) {
+            code += data;
+        });
+        out.on('end', function() {
+            expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { exports.test=true; }, ["$"]);');
+            done();
+        });
+    });
 
 });
 
