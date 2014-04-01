@@ -66,7 +66,7 @@ function getProjectRootDir(path) {
     rootDir = findRootDir(path, true);
 
     if (!rootDir) {
-        throw new Error('Unable to determine project root for path "' + path + '"');
+        rootDir = cwd;
     }
 
     cachedProjectRootDirs[rootDir] = true;
