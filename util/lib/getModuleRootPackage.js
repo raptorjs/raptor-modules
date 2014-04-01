@@ -37,7 +37,7 @@ function getModuleRootPackage(dirname) {
 
     rootPkg = findRootPackageHelper(dirname);
     if (!rootPkg) {
-        throw new Error('Unable to determine project root for path "' + dirname + '"');
+        throw new Error('Unable to determine module root for path "' + dirname + '"');
     }
 
     cachedModuleRootPackages[dirname] = rootPkg;
