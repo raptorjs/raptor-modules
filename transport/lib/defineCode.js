@@ -14,7 +14,7 @@ function defineCode(path, code, options) {
         globals = options.globals;
     }
     
-    if (!code) {
+    if (code == null) {
         throw new Error('"code" argument is required');
     }
 
