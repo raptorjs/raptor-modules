@@ -16,38 +16,40 @@ describe('raptor-modules/client' , function() {
         done();
     });
 
-    it('should throw error if trying to resolve target that is falsey', function(done) {
+    it('should throw error if trying to resolve target that is falsey', function() {
         var clientImpl = require('../');
 
-        try {
-            clientImpl.resolve('', '/some/module');
-            assert(false, 'Exception should have been thrown');
-        } catch(err) {
-            expect(err.code).to.equal('MODULE_NOT_FOUND');
-        }
+        clientImpl.ready();
 
-        try {
-            clientImpl.resolve(null, '/some/module');
-            assert(false, 'Exception should have been thrown');
-        } catch(err) {
-            expect(err.code).to.equal('MODULE_NOT_FOUND');
-        }
+        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+            try {
+                require.resolve('', '/some/module');
+                assert(false, 'Exception should have been thrown');
+            } catch(err) {
+                expect(err.code).to.equal('MODULE_NOT_FOUND');
+            }
 
-        try {
-            clientImpl.resolve(undefined, '/some/module');
-            assert(false, 'Exception should have been thrown');
-        } catch(err) {
-            expect(err.code).to.equal('MODULE_NOT_FOUND');
-        }
+            try {
+                require.resolve(null, '/some/module');
+                assert(false, 'Exception should have been thrown');
+            } catch(err) {
+                expect(err.code).to.equal('MODULE_NOT_FOUND');
+            }
 
-        try {
-            clientImpl.resolve(0, '/some/module');
-            assert(false, 'Exception should have been thrown');
-        } catch(err) {
-            expect(err.code).to.equal('MODULE_NOT_FOUND');
-        }
+            try {
+                require.resolve(undefined, '/some/module');
+                assert(false, 'Exception should have been thrown');
+            } catch(err) {
+                expect(err.code).to.equal('MODULE_NOT_FOUND');
+            }
 
-        done();
+            try {
+                require.resolve(0, '/some/module');
+                assert(false, 'Exception should have been thrown');
+            } catch(err) {
+                expect(err.code).to.equal('MODULE_NOT_FOUND');
+            }
+        });
     });
 
     it('should resolve modules using search path', function(done) {
@@ -79,12 +81,8 @@ describe('raptor-modules/client' , function() {
         expect(resolved[1]).to.equal('/baz@3.0.0/lib/index');
 
         // Code at under "/some/module" doesn't know about baz
-        try {
-            clientImpl.resolve('baz/lib/index', '/some/module');
-            assert(false, 'Exception should have been thrown');
-        } catch(err) {
-            expect(err.code).to.equal('MODULE_NOT_FOUND');
-        }
+        var resolved = clientImpl.resolve('baz/lib/index', '/some/module');
+        expect(resolved).to.equal(undefined);
 
         done();
     });
@@ -110,7 +108,7 @@ describe('raptor-modules/client' , function() {
         done();
     });
 
-    it('should resolve absolute paths containing installed modules', function(done) {
+    it('should resolve absolute paths containing installed modules', function() {
 
         var clientImpl = require('../');
         clientImpl.ready();
@@ -126,6 +124,8 @@ describe('raptor-modules/client' , function() {
         // This will create the following link:
         // /$/foo/$/baz --> baz@3.0.0
         clientImpl.dep('/$/foo', 'baz', '3.0.0');
+
+        clientImpl.ready();
 
         // Make sure that if we try to resolve "baz" with  from within some module
         // located at "/$/foo" then we should get back "/$/foo/$/baz"
@@ -143,13 +143,12 @@ describe('raptor-modules/client' , function() {
         expect(resolved[0]).to.equal('/baz@3.0.0/lib/index');
         expect(resolved[1]).to.equal('/baz@3.0.0/lib/index');
 
-        
-        expect(function() {
-            // Without registering "main", "/baz@3.0.0" will not be known
-            resolved = clientImpl.resolve('/baz@3.0.0', '/some/module');
-        }).to.throw(Error);
-        
-        done();
+        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+            expect(function() {
+                // Without registering "main", "/baz@3.0.0" will not be known
+                resolved = require.resolve('/baz@3.0.0', '/some/module');
+            }).to.throw(Error);
+        });
     });
 
     it('should instantiate modules', function(done) {
@@ -928,7 +927,7 @@ describe('raptor-modules/client' , function() {
         
     });
 
-    it.only('should allow a module to be mapped to a global', function(done) {
+    it('should allow a module to be mapped to a global', function(done) {
         var clientImpl = require('../');
 
         // define a module for a given real path
@@ -941,5 +940,25 @@ describe('raptor-modules/client' , function() {
         done();
     });
 
-    
+    it('should allow search paths', function() {
+        var clientImpl = require('../');
+
+        clientImpl.ready();
+
+        clientImpl.addSearchPath('/src/');
+
+        // define a module for a given real path
+        clientImpl.def('/src/my-module', function(require, exports, module, __filename, __dirname) {
+            module.exports.test = true;
+        });
+
+        var myModule;
+
+        clientImpl.run('/', function(require, exports, module, __filename, __dirname) {
+            myModule = require('my-module');
+        });
+
+        expect(myModule).to.not.equal(undefined);
+        expect(myModule.test).to.equal(true);
+    });
 });

@@ -1,5 +1,3 @@
-'use strict';
-
 /*
 GOAL: This module should mirror the NodeJS module system according the documented behavior.
 The module transport will generate code that is used for resolving
@@ -14,6 +12,9 @@ https://github.com/joyent/node/blob/master/lib/module.js
 
     // this object stores the module factories with the keys being real paths of module (e.g. "/baz@3.0.0/lib/index" --> Function)
     var definitions = {};
+
+    // Search path that will be checked when looking for modules
+    var searchPaths = [];
 
     // The isReady flag is used to determine if "run" modules can
     // be executed or if they should be deferred until all dependencies
@@ -101,7 +102,15 @@ https://github.com/joyent/node/blob/master/lib/module.js
             // This resolve function will make sure a definition exists for the corresponding
             // real path of the target but it will not instantiate a new instance of the target.
             instanceRequire.resolve = function(target) {
+                if (!target) {
+                    throw moduleNotFoundError('');
+                }
+                
                 var resolved = resolve(target, dirname);
+
+                if (!resolved) {
+                    throw moduleNotFoundError(target, dirname);
+                }
 
                 // Return logical path
                 // NOTE: resolved[0] is logical path
@@ -319,7 +328,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
         // lookup the version
         var dependencyInfo = dependencies[logicalPath];
         if (dependencyInfo === undefined) {
-            throw moduleNotFoundError(origTarget || target);
+            return undefined;
         }
 
         return versionedDependencyInfo(
@@ -340,6 +349,16 @@ https://github.com/joyent/node/blob/master/lib/module.js
     }
 
     function resolveModule(target, from) {
+        var len = searchPaths.length;
+        for (var i = 0; i < len; i++) {
+            // search path entries always in "/";
+            var candidate = searchPaths[i] + target;
+            var resolved = resolve(candidate, from);
+            if (resolved) {
+                return resolved;
+            }
+        }
+
         var dependencyId;
         var subpath;
 
@@ -433,15 +452,11 @@ https://github.com/joyent/node/blob/master/lib/module.js
             end = start;
         }
 
-        throw moduleNotFoundError(target, from);
+        // not found
+        return undefined;
     }
 
     function resolve(target, from) {
-        
-        if (!target) {
-            throw moduleNotFoundError('');
-        }
-
         var resolved;
         if (target.charAt(0) === '.') {
             // turn relative path into absolute path
@@ -454,6 +469,10 @@ https://github.com/joyent/node/blob/master/lib/module.js
             resolved = resolveModule(target, from);
         }
 
+        if (!resolved) {
+            return undefined;
+        }
+
         var logicalPath = resolved[0];
         var realPath = resolved[1];
 
@@ -463,7 +482,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
 
         // check to see if "target" is a "directory" which has a registered main file
         if ((relativePath = mains[realPath]) !== undefined) {
-            // there is a main file corresponding to the given target to add the relative path
+            // there is a main file corresponding to the given target so add the relative path
             logicalPath = join(logicalPath, relativePath);
             realPath = join(realPath, relativePath);
         }
@@ -480,7 +499,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
             var realPathWithoutExtension;
             if (((realPathWithoutExtension = withoutExtension(realPath)) === null) ||
                 ((factoryOrObject = definitions[realPathWithoutExtension]) === undefined)) {
-                throw moduleNotFoundError(target, from);
+                return undefined;
             }
 
             // we found the definition based on real path without extension so
@@ -498,7 +517,14 @@ https://github.com/joyent/node/blob/master/lib/module.js
     }
 
     function require(target, from) {
+        if (!target) {
+            throw moduleNotFoundError('');
+        }
+
         var resolved = resolve(target, from);
+        if (!resolved) {
+            throw moduleNotFoundError(target, from);
+        }
     
         var logicalPath = resolved[0];
         
@@ -521,6 +547,10 @@ https://github.com/joyent/node/blob/master/lib/module.js
         return module.exports;
     }
 
+    function addSearchPath(prefix) {
+        searchPaths.push(prefix);
+    }
+
     /*
      * $rmod is the short-hand version that that the transport layer expects
      * to be in the browser window object
@@ -537,7 +567,8 @@ https://github.com/joyent/node/blob/master/lib/module.js
         require: require,
         resolve: resolve,
         join: join,
-        ready: ready
+        ready: ready,
+        addSearchPath: addSearchPath
     };
 
     if (win) {
@@ -547,6 +578,3 @@ https://github.com/joyent/node/blob/master/lib/module.js
     }
 
 })();
-
-
-
