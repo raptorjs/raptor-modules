@@ -36,7 +36,7 @@ function defineCode(path, code, options) {
     out.push(code);
     
     if (!isObject) {
-        out.push(' }'); // End the function wrapper
+        out.push('\n}'); // End the function wrapper
         
         if (globals) {
             if (!Array.isArray(globals)) {
@@ -44,7 +44,7 @@ function defineCode(path, code, options) {
             }
 
             if (globals.length) {
-                out.push(', ' + JSON.stringify(globals));    
+                out.push(', ' + JSON.stringify(globals));
             }
         }
     }
