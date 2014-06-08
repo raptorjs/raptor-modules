@@ -121,10 +121,17 @@ https://github.com/joyent/node/blob/master/lib/module.js
             instanceRequire.cache = instanceCache;
 
             // $rmod.def("/foo@1.0.0/lib/index", function(require, exports, module, __filename, __dirname) {
-            this.exports = {};
+            var exports;
+            this.exports = exports = {};
 
             // call the factory function
             factoryOrObject.call(this, instanceRequire, this.exports, this, filename, dirname);
+
+            if (this.exports !== exports) {
+                for (var key in this.exports) {
+                    exports[key] = this.exports[key];
+                }
+            }
         } else {
             // factoryOrObject is not a function so have exports reference factoryOrObject
             this.exports = factoryOrObject;
