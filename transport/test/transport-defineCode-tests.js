@@ -28,7 +28,7 @@ describe('raptor-modules/transport.defineCode' , function() {
             code += data;
         });
         out.on('end', function() {
-            expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { exports.test=true; });');
+            expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { exports.test=true;\n});');
             done();
         });
     });
@@ -56,7 +56,7 @@ describe('raptor-modules/transport.defineCode' , function() {
             code += data;
         });
         out.on('end', function() {
-            expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { exports.test=true; });');
+            expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { exports.test=true;\n});');
             done();
         });
     });
@@ -70,7 +70,7 @@ describe('raptor-modules/transport.defineCode' , function() {
             code += data;
         });
         out.on('end', function() {
-            expect(code).to.equal('$rmod.run("/some/path", function(require, exports, module, __filename, __dirname) { exports.test=true; });');
+            expect(code).to.equal('$rmod.run("/some/path", function(require, exports, module, __filename, __dirname) { exports.test=true;\n});');
             done();
         });
     });
@@ -97,7 +97,7 @@ describe('raptor-modules/transport.defineCode' , function() {
             code += data;
         });
         out.on('end', function() {
-            expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { exports.test=true; }, ["$"]);');
+            expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { exports.test=true;\n}, ["$"]);');
             done();
         });
     });
