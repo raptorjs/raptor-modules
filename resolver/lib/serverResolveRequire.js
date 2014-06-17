@@ -1,4 +1,3 @@
-require('raptor-ecma/es6');
 var ok = require('assert').ok;
 var fs = require('fs');
 var nodePath = require('path');

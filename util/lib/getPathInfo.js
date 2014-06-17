@@ -1,4 +1,4 @@
-require('raptor-ecma/es6');
+require('raptor-polyfill/string/startsWith');
 var nodePath = require('path');
 var ok = require('assert').ok;
 

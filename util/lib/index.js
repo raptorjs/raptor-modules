@@ -1,5 +1,3 @@
-require('raptor-ecma/es6');
-
 var fs = require('fs');
 
 var DIR = 1;
