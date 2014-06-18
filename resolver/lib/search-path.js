@@ -1,3 +1,4 @@
+require('raptor-polyfill/string/endsWith');
 var nodePath = require('path');
 var Module = require('module').Module;
 var raptorModulesUtil = require('../../util');
