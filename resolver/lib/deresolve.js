@@ -66,13 +66,10 @@ function relPath(path, from) {
 }
 
 function deresolve(path, from) {
+	var targetRootDir = raptorModulesUtil.getModuleRootDir(path);
+	var fromRootDir = raptorModulesUtil.getModuleRootDir(from);
 
-	
-
-	var targetRootPackage = raptorModulesUtil.getModuleRootPackage(path);
-	var fromRootPackage = raptorModulesUtil.getModuleRootPackage(from);
-
-	if (targetRootPackage && fromRootPackage && targetRootPackage.__dirname === fromRootPackage.__dirname) {
+	if (targetRootDir && fromRootDir && targetRootDir === fromRootDir) {
 		return relPath(path, from);
 	}
 
