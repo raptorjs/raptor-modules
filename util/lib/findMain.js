@@ -40,8 +40,12 @@ function findMain(path) {
     else {
 
         main = nodePath.resolve(path, main);
+        var stat;
+        try {
+            stat = fs.statSync(main);
+        } catch(e) {}
 
-        if (!fs.existsSync(main)) {
+        if (!stat || stat.isDirectory()) {
             var dirname = nodePath.dirname(main);
             var filename = nodePath.basename(main);
 

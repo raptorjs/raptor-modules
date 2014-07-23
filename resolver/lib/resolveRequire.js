@@ -51,6 +51,7 @@ function resolveRequire(target, from, options) {
         resolvedPath = searchPath.find(target, from, function(path) {
 
             var dirname = nodePath.dirname(path);
+
             if (nodePath.basename(dirname) !== 'node_modules' && moduleUtil.isDirCached(dirname)) {
 
                 if (hasExt) {

@@ -258,5 +258,19 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         expect(e).to.not.equal(null);
     });
 
+    it('should resolve a module with main as a directory and file with the same name', function() {
+        var resolver = require('../');
+        var target = 'jsdom';
+        var from = nodePath.join(__dirname, 'test-project/node_modules/jquery/lib');
+        var root = nodePath.join(__dirname, 'test-project');
+
+        var resolved = resolver.resolveRequire(target, from, {root: root});
+        // console.log(JSON.stringify(resolved, null ,4));
+        expect(/\.js$/.test(resolved.main.filePath)).to.equal(true);
+        
+    });
+
+    
+
 });
 

@@ -112,7 +112,7 @@ function getPathInfo(path, options) {
             main = {
                 filePath: mainFilePath,
                 path: mainRelPath
-            };    
+            };
         }
     } else {
 
