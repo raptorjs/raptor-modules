@@ -933,7 +933,7 @@ describe('raptor-modules/client' , function() {
         // define a module for a given real path
         clientImpl.def('/jquery@1.0.0/lib/index', function(require, exports, module, __filename, __dirname) {
             exports.jquery = true;
-        }, '$');
+        }, {"globals": ['$']});
 
         expect(global.$.jquery).to.equal(true);
 
