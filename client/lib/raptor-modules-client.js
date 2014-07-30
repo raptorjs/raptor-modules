@@ -136,12 +136,15 @@ https://github.com/joyent/node/blob/master/lib/module.js
     /**
      * Defines a packages whose metadata is used by raptor-loader to load the package.
      */
-    function define(realPath, factoryOrObject, globals) {
+    function define(realPath, factoryOrObject, options) {
         /*
         $rmod.def('/baz@3.0.0/lib/index', function(require, exports, module, __filename, __dirname) {
             // module source code goes here
         });
         */
+       
+        var globals = options && options.globals;
+
         definitions[realPath] = factoryOrObject;
 
         if (globals) {
@@ -157,11 +160,17 @@ https://github.com/joyent/node/blob/master/lib/module.js
         // module source code goes here
     });
     */
-    function run(logicalPath, factory) {
-        if (!isReady) {
+    function run(logicalPath, factory, options) {
+        var wait = true;
+
+        if (options) {
+            wait = options.wait !== false;
+        }
+
+        if (wait && !isReady) {
             return runQueue.push(arguments);
         }
-        define(logicalPath, factory);
+        define(logicalPath, factory, options);
         var module = new Module([logicalPath, logicalPath]);
         instanceCache[logicalPath] = module;
         module.load(factory);

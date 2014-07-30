@@ -6,12 +6,14 @@ function defineCode(path, code, options) {
     var additionalVars = null;
     var run = false;
     var globals = null;
+    var wait = true;
 
     if (options) {
         isObject = options.object === true;
         additionalVars = options.additionalVars;
         run = options.run === true;
         globals = options.globals;
+        wait = options.wait !== false;
     }
     
     if (code == null) {
@@ -37,17 +39,26 @@ function defineCode(path, code, options) {
     
     if (!isObject) {
         out.push('\n}'); // End the function wrapper
-        
+    }
+
+    if (globals || (wait === false)) {
+
+        var defOptions = {};
         if (globals) {
             if (!Array.isArray(globals)) {
                 globals = [globals];
             }
-
-            if (globals.length) {
-                out.push(', ' + JSON.stringify(globals));
-            }
+            
+            defOptions.globals = globals;
         }
+
+        if (wait === false) {
+            defOptions.wait = false;
+        }
+
+        out.push(',' + JSON.stringify(defOptions));
     }
+    
 
     out.push(');'); // End the function call
     return out.join('');
