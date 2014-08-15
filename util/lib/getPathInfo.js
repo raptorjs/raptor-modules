@@ -2,8 +2,8 @@ require('raptor-polyfill/string/startsWith');
 var nodePath = require('path');
 var ok = require('assert').ok;
 
-var fs = require('fs');
 var raptorModulesUtil = require('../../util');
+var cachingFs = raptorModulesUtil.cachingFs;
 var raptorModulesResolver = require('../../resolver');
 var getProjectRootDir = raptorModulesUtil.getProjectRootDir;
 var getModuleRootPackage = raptorModulesUtil.getModuleRootPackage;
@@ -45,7 +45,12 @@ function getPathInfo(path, options) {
     var logicalPath;
     var realPath;
     var dep;
-    var stat = fs.statSync(path);
+    var stat = cachingFs.statSync(path);
+
+    if (!stat.exists(path)) {
+        throw new Error('File does not exist: ' + path);
+    }
+    
     var name;
     var version;
     var basePath;

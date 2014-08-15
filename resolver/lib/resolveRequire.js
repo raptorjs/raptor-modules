@@ -1,8 +1,8 @@
 var ok = require('assert').ok;
-var fs = require('fs');
 var nodePath = require('path');
 var searchPath = require('./search-path');
 var moduleUtil = require('../../util');
+var cachingFs = moduleUtil.cachingFs;
 
 function resolveRequire(target, from, options) {
     ok(target, '"target" is required');
@@ -11,17 +11,14 @@ function resolveRequire(target, from, options) {
     ok(typeof from === 'string', '"from" must be a string');
 
     var resolvedPath;
-    var stat;
 
     if (target.charAt(0) === '/' || target.indexOf(':\\') !== -1) {
-        try {
-            stat = fs.statSync(target);
+        var stat = cachingFs.statSync(target);
+        if (stat.exists()) {
             resolvedPath = target;
+
             // We need "from" to be accurate for looking up browser overrides:
             from = stat.isDirectory() ? resolvedPath : nodePath.dirname(resolvedPath);
-        }
-        catch(e) {
-            stat = null;
         }
     }
     
@@ -52,10 +49,10 @@ function resolveRequire(target, from, options) {
 
             var dirname = nodePath.dirname(path);
 
-            if (nodePath.basename(dirname) !== 'node_modules' && moduleUtil.isDirCached(dirname)) {
+            if (nodePath.basename(dirname) !== 'node_modules' && cachingFs.isDirectorySync(dirname)) {
 
                 if (hasExt) {
-                    if (fs.existsSync(path)) {
+                    if (cachingFs.existsSync(path)) {
                         return path;
                     }
                 }
@@ -65,14 +62,14 @@ function resolveRequire(target, from, options) {
                 for (var ext in extensions) {
                     if (extensions.hasOwnProperty(ext) && ext !== '.node') {
                         var pathWithExt = path + ext;
-                        if (fs.existsSync(pathWithExt)) {
+                        if (cachingFs.existsSync(pathWithExt)) {
                             return pathWithExt;
                         }
                     }
                 }
             }
 
-            if (fs.existsSync(path)) {
+            if (cachingFs.existsSync(path)) {
                 return path;
             }
 

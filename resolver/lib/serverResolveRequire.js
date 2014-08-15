@@ -1,8 +1,7 @@
 var ok = require('assert').ok;
-var fs = require('fs');
 var nodePath = require('path');
 var searchPath = require('./search-path');
-var moduleUtil = require('../../util');
+var cachingFs = require('../../util').cachingFs;
 
 function serverResolveRequire(target, from) {
     ok(target, '"target" is required');
@@ -19,20 +18,20 @@ function serverResolveRequire(target, from) {
     var result = searchPath.find(target, from, function(path) {
 
         var dirname = nodePath.dirname(path);
-        if (nodePath.basename(dirname) !== 'node_modules' && moduleUtil.isDirCached(dirname)) {
+        if (nodePath.basename(dirname) !== 'node_modules' && cachingFs.isDirectorySync(dirname)) {
             // Try with the extensions
             var extensions = require.extensions;
             for (var ext in extensions) {
                 if (extensions.hasOwnProperty(ext)) {
                     var pathWithExt = path + ext;
-                    if (moduleUtil.isDirCached(nodePath.dirname()) && fs.existsSync(pathWithExt)) {
+                    if (cachingFs.isDirectorySync(nodePath.dirname()) && cachingFs.existsSync(pathWithExt)) {
                         return pathWithExt;
                     }
                 }
             }
         }
 
-        if (fs.existsSync(path)) {
+        if (cachingFs.existsSync(path)) {
             return path;
         }
 

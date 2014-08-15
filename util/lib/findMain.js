@@ -1,4 +1,6 @@
 var fs = require('fs');
+var cachingFs = require('./caching-fs');
+
 var nodePath = require('path');
 var packageReader = require('./package-reader');
 var ok = require('assert').ok;
@@ -40,12 +42,9 @@ function findMain(path) {
     else {
 
         main = nodePath.resolve(path, main);
-        var stat;
-        try {
-            stat = fs.statSync(main);
-        } catch(e) {}
+        var stat = cachingFs.statSync(main);
 
-        if (!stat || stat.isDirectory()) {
+        if (!stat.exists() || stat.isDirectory()) {
             var dirname = nodePath.dirname(main);
             var filename = nodePath.basename(main);
 
