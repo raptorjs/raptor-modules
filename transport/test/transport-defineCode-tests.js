@@ -31,6 +31,8 @@ describe('raptor-modules/transport.defineCode' , function() {
             expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { exports.test=true;\n});');
             done();
         });
+
+        out.resume();
     });
 
     it('should handle String argument for object code', function(done) {
@@ -41,10 +43,11 @@ describe('raptor-modules/transport.defineCode' , function() {
             code += data;
         });
         out.on('end', function() {
-            console.log("CODE: ", code);
             expect(code).to.equal('$rmod.def("/some/path", { "hello": "world" });');
             done();
         });
+
+        out.resume();
     });
 
     it('should handle Stream argument for factory function code', function(done) {
@@ -59,6 +62,8 @@ describe('raptor-modules/transport.defineCode' , function() {
             expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { exports.test=true;\n});');
             done();
         });
+
+        out.resume();
     });
 
     it('should handle Stream argument for factory function code with run set to true', function(done) {
@@ -73,6 +78,8 @@ describe('raptor-modules/transport.defineCode' , function() {
             expect(code).to.equal('$rmod.run("/some/path", function(require, exports, module, __filename, __dirname) { exports.test=true;\n});');
             done();
         });
+
+        out.resume();
     });
 
     it('should handle Stream argument for object code', function(done) {
@@ -87,6 +94,8 @@ describe('raptor-modules/transport.defineCode' , function() {
             expect(code).to.equal('$rmod.def("/some/path", { "hello": "world" });');
             done();
         });
+
+        out.resume();
     });
 
     it('should support "globalName" option', function(done) {
@@ -100,6 +109,8 @@ describe('raptor-modules/transport.defineCode' , function() {
             expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { exports.test=true;\n},{"globals":["$"]});');
             done();
         });
+
+        out.resume();
     });
 
 });

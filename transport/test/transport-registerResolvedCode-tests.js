@@ -31,6 +31,8 @@ describe('raptor-modules/transport.registerResolvedCode' , function() {
             expect(code).to.equal('$rmod.resolved("baz", "/src", "/$/baz/lib/index");');
             done();
         });
+
+        out.resume();
     });
 });
 

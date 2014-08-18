@@ -31,6 +31,8 @@ describe('raptor-modules/transport.registerDependencyCode' , function() {
             expect(code).to.equal('$rmod.dep("", "foo", "1.0.0");');
             done();
         });
+
+        out.resume();
     });
 
     it('should generate correct dependency code for nested dependency', function(done) {
@@ -44,6 +46,8 @@ describe('raptor-modules/transport.registerDependencyCode' , function() {
             expect(code).to.equal('$rmod.dep("/node_modules/foo", "baz", "3.0.0");');
             done();
         });
+
+        out.resume();
     });
 
     it('should generate correct dependency code for dependency with an alternate name', function(done) {
@@ -57,6 +61,8 @@ describe('raptor-modules/transport.registerDependencyCode' , function() {
             expect(code).to.equal('$rmod.dep("", "foo-browserify", "1.0.0", "foo");');
             done();
         });
+
+        out.resume();
     });
 });
 

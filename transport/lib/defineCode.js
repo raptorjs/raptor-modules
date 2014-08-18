@@ -1,5 +1,4 @@
-var resumer = require('resumer');
-var eventStream = require('event-stream');
+var through = require('through');
 
 function defineCode(path, code, options) {
     var isObject = false;
@@ -65,12 +64,13 @@ function defineCode(path, code, options) {
 }
 
 module.exports = function(path, code, options) {
-    var out = resumer();
+    var out = through();
+    out.pause();
 
     if (code.pipe) {
         var stream = code;
         code = '';
-        stream.pipe(eventStream.through(
+        stream.pipe(through(
             function write(data) {
                 code += data;
             },

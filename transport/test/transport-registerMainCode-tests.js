@@ -31,6 +31,8 @@ describe('raptor-modules/transport.registerMainCode' , function() {
             expect(code).to.equal('$rmod.main("/foo@1.0.0", "lib/index");');
             done();
         });
+
+        out.resume();
     });
 });
 

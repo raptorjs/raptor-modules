@@ -1,7 +1,9 @@
-var resumer = require('resumer');
+var through = require('through');
 
 function registerDependencyCode(logicalParentPath, childName, childVersion, overrideName) {
-    var out = resumer();
+    var out = through();
+    out.pause();
+    
     out.queue('$rmod.dep(' + JSON.stringify(logicalParentPath) + ', ' +
         JSON.stringify(overrideName || childName) + ', ' +
         JSON.stringify(childVersion));

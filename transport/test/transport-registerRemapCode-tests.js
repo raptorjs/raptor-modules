@@ -1,11 +1,9 @@
 'use strict';
 require('../'); // Load the module
-var nodePath = require('path');
 var chai = require('chai');
 chai.Assertion.includeStack = true;
 require('chai').should();
 var expect = require('chai').expect;
-var fs = require('fs');
 
 require('../'); // Load this module just to make sure it works
 
@@ -31,6 +29,8 @@ describe('raptor-modules/transport.registerRemapCode' , function() {
             expect(code).to.equal('$rmod.remap("/foo@1.0.0/lib/index", "index_browser");');
             done();
         });
+
+        out.resume();
     });
 });
 

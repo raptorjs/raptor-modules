@@ -1,7 +1,9 @@
-var resumer = require('resumer');
+var through = require('through');
 
 function registerResolvedCode(target, from, resolved) {
-    var out = resumer();
+    var out = through();
+    out.pause();
+
     out.queue('$rmod.resolved(' + JSON.stringify(target) + ', ' +
         JSON.stringify(from) + ', ' +
         JSON.stringify(resolved) + ');');

@@ -1,10 +1,12 @@
-var resumer = require('resumer');
+var through = require('through');
 
 function registerMainCode(path, main) {
-    var out = resumer();
+    var out = through();
+    out.pause();
+    
     out.queue('$rmod.main(' + JSON.stringify(path) + ', ' +
         JSON.stringify(main) + ');');
-    out.end(); 
+    out.end();
     return out;
 }
 

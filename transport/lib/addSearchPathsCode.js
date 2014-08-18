@@ -1,7 +1,8 @@
-var resumer = require('resumer');
+var through = require('through');
 
 function addSearchPathsCode(paths) {
-    var out = resumer();
+    var out = through();
+    out.pause();
 
     for (var i = 0; i < paths.length; i++) {
         var path = paths[i];
