@@ -360,7 +360,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
     function resolveModule(target, from) {
         var len = searchPaths.length;
         for (var i = 0; i < len; i++) {
-            // search path entries always in "/";
+            // search path entries always end in "/";
             var candidate = searchPaths[i] + target;
             var resolved = resolve(candidate, from);
             if (resolved) {
