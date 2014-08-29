@@ -66,16 +66,15 @@ describe('raptor-modules/transport.defineCode' , function() {
         out.resume();
     });
 
-    it('should handle Stream argument for factory function code with run set to true', function(done) {
+    it('should handle run code for some path', function(done) {
         var transport = require('../');
-        var stream = fs.createReadStream(nodePath.join(__dirname, 'test.js'), {encoding: 'utf8'});
-        var out = transport.runCode('/some/path', stream);
+        var out = transport.runCode('/some/path');
         var code = '';
         out.on('data', function(data) {
             code += data;
         });
         out.on('end', function() {
-            expect(code).to.equal('$rmod.run("/some/path", function(require, exports, module, __filename, __dirname) { exports.test=true;\n});');
+            expect(code).to.equal('$rmod.run("/some/path");');
             done();
         });
 

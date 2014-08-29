@@ -3,14 +3,12 @@ var through = require('through');
 function defineCode(path, code, options) {
     var isObject = false;
     var additionalVars = null;
-    var run = false;
     var globals = null;
     var wait = true;
 
     if (options) {
         isObject = options.object === true;
         additionalVars = options.additionalVars;
-        run = options.run === true;
         globals = options.globals;
         wait = options.wait !== false;
     }
@@ -21,7 +19,7 @@ function defineCode(path, code, options) {
 
 
     var out = [];
-    out.push('$rmod.' + (run ? 'run' : 'def') + '(');
+    out.push('$rmod.def(');
     out.push(JSON.stringify(path));
 
     if (isObject) {

@@ -21,7 +21,7 @@ describe('raptor-modules/client' , function() {
 
         clientImpl.ready();
 
-        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/app/launch/index', function(require, exports, module, __filename, __dirname) {
             try {
                 require.resolve('', '/some/module');
                 assert(false, 'Exception should have been thrown');
@@ -50,6 +50,8 @@ describe('raptor-modules/client' , function() {
                 expect(err.code).to.equal('MODULE_NOT_FOUND');
             }
         });
+
+        clientImpl.run('/app/launch/index');
     });
 
     it('should resolve modules using search path', function(done) {
@@ -143,12 +145,14 @@ describe('raptor-modules/client' , function() {
         expect(resolved[0]).to.equal('/baz@3.0.0/lib/index');
         expect(resolved[1]).to.equal('/baz@3.0.0/lib/index');
 
-        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/app/launch/index', function(require, exports, module, __filename, __dirname) {
             expect(function() {
                 // Without registering "main", "/baz@3.0.0" will not be known
                 resolved = require.resolve('/baz@3.0.0', '/some/module');
             }).to.throw(Error);
         });
+
+        clientImpl.run('/app/launch/index');
     });
 
     it('should instantiate modules', function(done) {
@@ -268,13 +272,15 @@ describe('raptor-modules/client' , function() {
         var instanceCount = 0;
 
         // define a module for a given real path
-        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/app/launch/index', function(require, exports, module, __filename, __dirname) {
             instanceCount++;
             module.exports = {
                 __filename: __filename,
                 __dirname: __dirname
             };
         });
+
+        clientImpl.run('/app/launch/index');
 
         // run will define the instance and automatically load it
         expect(instanceCount).to.equal(1);
@@ -309,7 +315,7 @@ describe('raptor-modules/client' , function() {
         });
 
         // define a module for a given real path
-        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/app/launch/index', function(require, exports, module, __filename, __dirname) {
 
             var util;
 
@@ -325,6 +331,8 @@ describe('raptor-modules/client' , function() {
                 greeting: util.sayHello()
             };
         });
+
+        clientImpl.run('/app/launch/index');
 
         // you can also require the instance again if you really want to
         var launch = clientImpl.require('/app/launch/index', '/$/foo');
@@ -346,7 +354,7 @@ describe('raptor-modules/client' , function() {
         });
         
         // define a module for a given real path
-        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/app/launch/index', function(require, exports, module, __filename, __dirname) {
 
             expect(require('./util')).to.equal(require(require.resolve('./util')));
 
@@ -356,6 +364,8 @@ describe('raptor-modules/client' , function() {
                 greeting: util.sayHello()
             };
         });
+
+        clientImpl.run('/app/launch/index');
 
         done();
 
@@ -377,13 +387,15 @@ describe('raptor-modules/client' , function() {
         });
         
         // define a module for a given real path
-        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/app/launch/index', function(require, exports, module, __filename, __dirname) {
 
             var logicalPath = require.resolve('./util');
 
             expect(logicalPath).to.equal('/app/launch/util');
             expect(instanceCount).to.equal(0);
         });
+
+        clientImpl.run('/app/launch/index');
 
         done();
 
@@ -401,10 +413,12 @@ describe('raptor-modules/client' , function() {
         });
         
         // define a module for a given real path
-        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/app/launch/index', function(require, exports, module, __filename, __dirname) {
             var util = require('./util');
             expect(util.greeting).to.equal('Hello!');
         });
+
+        clientImpl.run('/app/launch/index');
 
         done();
 
@@ -420,10 +434,12 @@ describe('raptor-modules/client' , function() {
         });
         
         // define a module for a given real path
-        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/app/launch/index', function(require, exports, module, __filename, __dirname) {
             var util = require('./util');
             expect(util.greeting).to.equal('Hello!');
         });
+
+        clientImpl.run('/app/launch/index');
 
         done();
     });
@@ -438,10 +454,12 @@ describe('raptor-modules/client' , function() {
         });
         
         // define a module for a given real path
-        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/app/launch/index', function(require, exports, module, __filename, __dirname) {
             var util = require('./util');
             expect(util.greeting).to.equal('Hello!');
         });
+
+        clientImpl.run('/app/launch/index');
 
         done();
     });
@@ -459,10 +477,12 @@ describe('raptor-modules/client' , function() {
         clientImpl.def('/app/launch/util', null);
         
         // define a module for a given real path
-        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/app/launch/index', function(require, exports, module, __filename, __dirname) {
             var util = require('./util');
             expect(util).to.equal(null);
         });
+
+        clientImpl.run('/app/launch/index');
 
         done();
     });
@@ -477,11 +497,13 @@ describe('raptor-modules/client' , function() {
         clientImpl.def('/app/launch/util', undefined);
         
         // define a module for a given real path
-        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/app/launch/index', function(require, exports, module, __filename, __dirname) {
             expect(function() {
                 require('./util');
             }).to.throw(Error);
         });
+
+        clientImpl.run('/app/launch/index');
 
         done();
     });
@@ -524,13 +546,15 @@ describe('raptor-modules/client' , function() {
         });
         
         // define a module for a given real path
-        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/app/launch/index', function(require, exports, module, __filename, __dirname) {
 
             expect(require.resolve('./util.js')).to.equal('/app/launch/util');
             expect(require.resolve('./util')).to.equal('/app/launch/util');
 
             expect(instanceCount).to.equal(0);
         });
+
+        clientImpl.run('/app/launch/index');
 
         done();
     });
@@ -548,7 +572,7 @@ describe('raptor-modules/client' , function() {
         });
         
         // define a module for a given real path
-        clientImpl.run('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/app/launch/index', function(require, exports, module, __filename, __dirname) {
             var util0 = require('./do.something.js');
             var util1 = require('./do.something');
 
@@ -556,6 +580,8 @@ describe('raptor-modules/client' , function() {
             expect(util0).to.equal(util1);
             expect(util0.greeting).to.equal('Hello!');
         });
+
+        clientImpl.run('/app/launch/index');
 
         done();
     });
@@ -587,7 +613,7 @@ describe('raptor-modules/client' , function() {
         expect(resolved[0]).to.equal('/app/lib/index');
 
         // define a module for a given real path
-        clientImpl.run('/app/lib/launch', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/app/lib/launch', function(require, exports, module, __filename, __dirname) {
 
             expect(__dirname).to.equal('/app/lib');
             expect(__filename).to.equal('/app/lib/launch');
@@ -610,6 +636,8 @@ describe('raptor-modules/client' , function() {
                    app4 === app0 &&
                    app5 === app0, 'All instances are not equal to each other');
         });
+
+        clientImpl.run('/app/lib/launch');
 
         done();
     });
@@ -635,7 +663,7 @@ describe('raptor-modules/client' , function() {
         clientImpl.dep('', 'streams', '1.0.0');
 
         // define a module for a given real path
-        clientImpl.run('/app', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/app', function(require, exports, module, __filename, __dirname) {
 
             expect(__dirname).to.equal('');
             expect(__filename).to.equal('/app');
@@ -643,8 +671,10 @@ describe('raptor-modules/client' , function() {
             expect(require.resolve('streams')).to.equal('/$/streams/lib/index');
         });
 
+        clientImpl.run('/app');
+
         // define a module for a given real path
-        clientImpl.run('/app/launch', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/app/launch', function(require, exports, module, __filename, __dirname) {
 
             expect(__dirname).to.equal('/app');
             expect(__filename).to.equal('/app/launch');
@@ -652,6 +682,8 @@ describe('raptor-modules/client' , function() {
             expect(require.resolve('streams')).to.equal('/$/streams/lib/index');
             expect(require.resolve('streams/lib/index')).to.equal('/$/streams/lib/index');
         });
+
+        clientImpl.run('/app/launch');
 
         done();
     });
@@ -788,9 +820,11 @@ describe('raptor-modules/client' , function() {
         });
 
         // define a module for a given real path
-        clientImpl.run('/', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/', function(require, exports, module, __filename, __dirname) {
             widgetsModule = require('/$/raptor-widgets');
         });
+
+        clientImpl.run('/');
 
         // run will define the instance and automatically load it
         expect(widgetsModule.filename).to.equal('/$/raptor-widgets/lib/index');
@@ -831,11 +865,13 @@ describe('raptor-modules/client' , function() {
         });
 
         var Baz = null;
-        clientImpl.run('/', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/', function(require, exports, module, __filename, __dirname) {
             var foo = require('foo');
             Baz = foo.Baz;
 
         });
+
+        clientImpl.run('/');
 
         expect(Baz.isBaz).to.equal(true);
 
@@ -861,9 +897,11 @@ describe('raptor-modules/client' , function() {
         });
 
         var raptorRenderContext = null;
-        clientImpl.run('/', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/', function(require, exports, module, __filename, __dirname) {
             raptorRenderContext = require('raptor-render-context');
         });
+
+        clientImpl.run('/');
 
         expect(raptorRenderContext.RAPTOR_RENDER_CONTEXT).to.equal(true);
         expect(raptorRenderContext.events.EVENTS_BROWSERIFY).to.equal(true);
@@ -884,9 +922,11 @@ describe('raptor-modules/client' , function() {
         clientImpl.remap('/process@0.6.0/index', 'browser');
         clientImpl.main('/process@0.6.0', 'index');
 
-        clientImpl.run('/', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/', function(require, exports, module, __filename, __dirname) {
             processModule = require('process');
         });
+
+        clientImpl.run('/');
 
         expect(processModule.PROCESS).to.equal(true);
     });
@@ -918,9 +958,11 @@ describe('raptor-modules/client' , function() {
         // install dependency /$/raptor-templates/$/raptor-render-context (version 0.1.0-SNAPSHOT)
         clientImpl.dep('/$/raptor-templates', 'raptor-render-context', '0.1.0-SNAPSHOT');
 
-        clientImpl.run('/', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/', function(require, exports, module, __filename, __dirname) {
             raptorTemplatesModule = require('raptor-templates');
         });
+
+        clientImpl.run('/');
 
         expect(raptorTemplatesModule.RAPTOR_TEMPLATES).to.equal(true);
         expect(raptorTemplatesModule.raptorRenderContext.RAPTOR_RENDER_CONTEXT).to.equal(true);
@@ -933,7 +975,7 @@ describe('raptor-modules/client' , function() {
         // define a module for a given real path
         clientImpl.def('/jquery@1.0.0/lib/index', function(require, exports, module, __filename, __dirname) {
             exports.jquery = true;
-        }, {"globals": ['$']});
+        }, {'globals': ['$']});
 
         expect(global.$.jquery).to.equal(true);
 
@@ -954,9 +996,11 @@ describe('raptor-modules/client' , function() {
 
         var myModule;
 
-        clientImpl.run('/', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/', function(require, exports, module, __filename, __dirname) {
             myModule = require('my-module');
         });
+
+        clientImpl.run('/');
 
         expect(myModule).to.not.equal(undefined);
         expect(myModule.test).to.equal(true);

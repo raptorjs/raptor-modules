@@ -1,14 +1,18 @@
-var defineCode = require('./defineCode');
+var through = require('through');
 
+function runCode(path, options) {
+    return '$rmod.run(' + JSON.stringify(path) + (options ? (',' + JSON.stringify(options)) : '') + ');';
+}
 
-module.exports = function(path, code, options) {
-    options = options || {};
-    options.run = true;
-    return defineCode(path, code, options);
+module.exports = function(path, options) {
+
+    var out = through();
+    out.pause();
+
+    out.queue(runCode(path, options));
+    out.end();
+
+    return out;
 };
 
-module.exports.sync = function(path, code, options) {
-    options = options || {};
-    options.run = true;
-    return defineCode.sync(path, code, options);
-};
+module.exports.sync = runCode;

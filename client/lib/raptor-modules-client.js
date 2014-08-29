@@ -156,11 +156,9 @@ https://github.com/joyent/node/blob/master/lib/module.js
     }
 
     /*
-    $rmod.run('/src/ui-pages/login/login-page', function(require, exports, module, __filename, __dirname) {
-        // module source code goes here
-    });
+    $rmod.run('/src/ui-pages/login/login-page');
     */
-    function run(logicalPath, factory, options) {
+    function run(realPath, options) {
         var wait = true;
 
         if (options) {
@@ -170,10 +168,11 @@ https://github.com/joyent/node/blob/master/lib/module.js
         if (wait && !isReady) {
             return runQueue.push(arguments);
         }
-        define(logicalPath, factory, options);
-        var module = new Module([logicalPath, logicalPath]);
-        instanceCache[logicalPath] = module;
-        module.load(factory);
+
+        var module = instanceCache[realPath] || (instanceCache[realPath] = new Module([realPath]));
+        if (!module.loaded) {
+            module.load(definitions[realPath]);
+        }
     }
 
     /*
