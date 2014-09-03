@@ -62,7 +62,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
         - id: The logical path of the module (same as filename)
         - exports: The exports provided during load
         - loaded: Has module been fully loaded (set to false until factory function returns)
-        
+
         NOT SUPPORTED BY RAPTOR:
         - parent: parent Module
         - paths: The search path used by this module (NOTE: not documented in Node.js module system so we don't need support)
@@ -105,7 +105,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
                 if (!target) {
                     throw moduleNotFoundError('');
                 }
-                
+
                 var resolved = resolve(target, dirname);
 
                 if (!resolved) {
@@ -142,7 +142,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
             // module source code goes here
         });
         */
-       
+
         var globals = options && options.globals;
 
         definitions[realPath] = factoryOrObject;
@@ -154,39 +154,6 @@ https://github.com/joyent/node/blob/master/lib/module.js
             }
         }
     }
-
-    /*
-    $rmod.run('/src/ui-pages/login/login-page');
-    */
-    function run(realPath, options) {
-        var wait = true;
-
-        if (options) {
-            wait = options.wait !== false;
-        }
-
-        if (wait && !isReady) {
-            return runQueue.push(arguments);
-        }
-
-        var module = instanceCache[realPath] || (instanceCache[realPath] = new Module([realPath]));
-        if (!module.loaded) {
-            module.load(definitions[realPath]);
-        }
-    }
-
-    /*
-     * Mark the page as being ready and execute any of the
-     * run modules that were deferred
-     */
-    function ready() {
-        isReady = true;
-        for (var i=0; i<runQueue.length; i++) {
-            run.apply(runQueue, runQueue[i]);
-        }
-        runQueue.length = 0;
-    }
-
 
     function registerMain(realPath, relativePath) {
         mains[realPath] = relativePath;
@@ -533,9 +500,9 @@ https://github.com/joyent/node/blob/master/lib/module.js
         if (!resolved) {
             throw moduleNotFoundError(target, from);
         }
-    
+
         var logicalPath = resolved[0];
-        
+
         var module = instanceCache[logicalPath];
 
         if (module !== undefined) {
@@ -553,6 +520,35 @@ https://github.com/joyent/node/blob/master/lib/module.js
         module.load(factoryOrObject);
 
         return module.exports;
+    }
+
+    /*
+    $rmod.run('/$/installed-module', '/src/foo');
+    */
+    function run(logicalPath, options) {
+        var wait = true;
+
+        if (options) {
+            wait = options.wait !== false;
+        }
+
+        if (wait && !isReady) {
+            return runQueue.push(arguments);
+        }
+
+        require(logicalPath, '/');
+    }
+
+    /*
+     * Mark the page as being ready and execute any of the
+     * run modules that were deferred
+     */
+    function ready() {
+        isReady = true;
+        for (var i=0; i<runQueue.length; i++) {
+            run.apply(runQueue, runQueue[i]);
+        }
+        runQueue.length = 0;
     }
 
     function addSearchPath(prefix) {
