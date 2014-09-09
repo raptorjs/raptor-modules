@@ -26,8 +26,8 @@ function removeRegisteredExt(path) {
     var basename = nodePath.basename(path);
     var ext = nodePath.extname(basename);
 
-    if (ext === '.js') {
-        return path.slice(0, -3);
+    if (ext === '.js' || ext === '.json') {
+        return path.slice(0, 0-ext.length);
     } else {
         return path;
     }
