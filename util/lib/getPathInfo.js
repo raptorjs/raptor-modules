@@ -21,12 +21,13 @@ function normalizeDepDirnames(path) {
     return parts.join('/');
 }
 
+
 function removeRegisteredExt(path) {
     var basename = nodePath.basename(path);
     var ext = nodePath.extname(basename);
 
-    if (require.extensions[ext]) {
-        return path.slice(0, 0-ext.length);
+    if (ext === '.js') {
+        return path.slice(0, -3);
     } else {
         return path;
     }
@@ -50,7 +51,7 @@ function getPathInfo(path, options) {
     if (!stat.exists(path)) {
         throw new Error('File does not exist: ' + path);
     }
-    
+
     var name;
     var version;
     var basePath;
@@ -65,11 +66,11 @@ function getPathInfo(path, options) {
             if (moduleNameEnd === -1) {
                 moduleNameEnd = path.length;
             }
-            
+
             var pkg = getModuleRootPackage(path);
             name = pkg.name;
             version = pkg.version;
-            
+
             basePath = '/' + name + '@' + version;
             realPath = normalizeDepDirnames(basePath + path.substring(moduleNameEnd));
 
@@ -104,7 +105,7 @@ function getPathInfo(path, options) {
         // console.log('RESOLVE LINKED MODULE: ', '\npath: ', path, '\nrealPath: ', realPath, '\nlogicalPath: ', logicalPath, '\ndep: ', dep, '\nmoduleRootPkg.__dirname: ', moduleRootPkg.__dirname);
     }
 
-    
+
 
     var isDir = stat.isDirectory();
     var main;
@@ -138,7 +139,7 @@ function getPathInfo(path, options) {
 
                 if (browserOverride.filePath) {
                     targetFile = browserOverride.filePath;
-                    
+
                 } else if (browserOverride.name) {
                     ok(browserOverride.from, 'browserOverride.from expected');
 
