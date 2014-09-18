@@ -12,7 +12,7 @@ function defineCode(path, code, options) {
         globals = options.globals;
         wait = options.wait !== false;
     }
-    
+
     if (code == null) {
         throw new Error('"code" argument is required');
     }
@@ -31,9 +31,9 @@ function defineCode(path, code, options) {
         }
     }
 
-    
+
     out.push(code);
-    
+
     if (!isObject) {
         out.push('\n}'); // End the function wrapper
     }
@@ -45,7 +45,7 @@ function defineCode(path, code, options) {
             if (!Array.isArray(globals)) {
                 globals = [globals];
             }
-            
+
             defOptions.globals = globals;
         }
 
@@ -55,7 +55,7 @@ function defineCode(path, code, options) {
 
         out.push(',' + JSON.stringify(defOptions));
     }
-    
+
 
     out.push(');'); // End the function call
     return out.join('');
