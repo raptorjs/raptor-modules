@@ -799,7 +799,7 @@ describe('raptor-modules/client' , function() {
         TEST SETUP:
 
         Call require('raptor-util') from within the following file:
-        /node_modules/raptor-widgets/lib/index.js
+        /node_modules/marko-widgets/lib/index.js
 
         'raptor-util' is installed as a dependency for the top-level 'raptor-modules' module
         */
@@ -807,30 +807,30 @@ describe('raptor-modules/client' , function() {
 
         var widgetsModule = null;
         // var raptorUtilModule = null;
-        clientImpl.dep('/$/raptor-widgets', 'raptor-util', '0.1.0-SNAPSHOT');
+        clientImpl.dep('/$/marko-widgets', 'raptor-util', '0.1.0-SNAPSHOT');
         clientImpl.main('/raptor-util@0.1.0-SNAPSHOT', 'lib/index');
         clientImpl.def('/raptor-util@0.1.0-SNAPSHOT/lib/index', function(require, exports, module, __filename, __dirname) {
             exports.filename = __filename;
         });
 
-        clientImpl.dep('', 'raptor-widgets', '0.1.0-SNAPSHOT');
-        clientImpl.main('/raptor-widgets@0.1.0-SNAPSHOT', 'lib/index');
-        clientImpl.main('/raptor-widgets@0.1.0-SNAPSHOT/lib', 'index');
-        clientImpl.def('/raptor-widgets@0.1.0-SNAPSHOT/lib/index', function(require, exports, module, __filename, __dirname) {
+        clientImpl.dep('', 'marko-widgets', '0.1.0-SNAPSHOT');
+        clientImpl.main('/marko-widgets@0.1.0-SNAPSHOT', 'lib/index');
+        clientImpl.main('/marko-widgets@0.1.0-SNAPSHOT/lib', 'index');
+        clientImpl.def('/marko-widgets@0.1.0-SNAPSHOT/lib/index', function(require, exports, module, __filename, __dirname) {
             exports.filename = __filename;
             exports.raptorUtil = require('raptor-util');
         });
 
         // define a module for a given real path
         clientImpl.def('/__widgets', function(require, exports, module, __filename, __dirname) {
-            widgetsModule = require('/$/raptor-widgets');
+            widgetsModule = require('/$/marko-widgets');
         });
 
         clientImpl.run('/__widgets');
 
         // run will define the instance and automatically load it
-        expect(widgetsModule.filename).to.equal('/$/raptor-widgets/lib/index');
-        expect(widgetsModule.raptorUtil.filename).to.equal('/$/raptor-widgets/$/raptor-util/lib/index');
+        expect(widgetsModule.filename).to.equal('/$/marko-widgets/lib/index');
+        expect(widgetsModule.raptorUtil.filename).to.equal('/$/marko-widgets/$/raptor-util/lib/index');
 
         done();
     });
@@ -884,23 +884,23 @@ describe('raptor-modules/client' , function() {
         var clientImpl = require('../');
         clientImpl.ready();
 
-        clientImpl.dep('/$/raptor-render-context', 'events-browserify', '0.0.1', 'events');
+        clientImpl.dep('/$/async-writer', 'events-browserify', '0.0.1', 'events');
         clientImpl.main('/events-browserify@0.0.1', 'events');
 
         clientImpl.def('/events-browserify@0.0.1/events', function(require, exports, module, __filename, __dirname) {
             exports.EVENTS_BROWSERIFY = true;
         });
 
-        clientImpl.dep('', 'raptor-render-context', '0.1.0-SNAPSHOT');
-        clientImpl.main('/raptor-render-context@0.1.0-SNAPSHOT', 'lib/raptor-render-context');
-        clientImpl.def('/raptor-render-context@0.1.0-SNAPSHOT/lib/raptor-render-context', function(require, exports, module, __filename, __dirname) {
+        clientImpl.dep('', 'async-writer', '0.1.0-SNAPSHOT');
+        clientImpl.main('/async-writer@0.1.0-SNAPSHOT', 'lib/async-writer');
+        clientImpl.def('/async-writer@0.1.0-SNAPSHOT/lib/async-writer', function(require, exports, module, __filename, __dirname) {
             exports.RAPTOR_RENDER_CONTEXT = true;
             exports.events = require('events');
         });
 
         var raptorRenderContext = null;
         clientImpl.def('/main', function(require, exports, module, __filename, __dirname) {
-            raptorRenderContext = require('raptor-render-context');
+            raptorRenderContext = require('async-writer');
         });
 
         clientImpl.run('/main');
@@ -937,37 +937,37 @@ describe('raptor-modules/client' , function() {
         var clientImpl = require('../');
         clientImpl.ready();
 
-        var raptorTemplatesModule = null;
+        var markoModule = null;
 
-        clientImpl.def('/raptor-templates@0.1.0-SNAPSHOT/runtime/lib/raptor-templates', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/marko@0.1.0-SNAPSHOT/runtime/lib/marko', function(require, exports, module, __filename, __dirname) {
             exports.RAPTOR_TEMPLATES = true;
-            exports.raptorRenderContext = require('raptor-render-context');
+            exports.raptorRenderContext = require('async-writer');
         });
 
-        // install dependency /$/raptor-templates (version 0.1.0-SNAPSHOT)
-        clientImpl.dep('', 'raptor-templates', '0.1.0-SNAPSHOT');
+        // install dependency /$/marko (version 0.1.0-SNAPSHOT)
+        clientImpl.dep('', 'marko', '0.1.0-SNAPSHOT');
 
-        // If something like "/$/raptor-templates" is required then
-        // use "/$/raptor-templates/runtime/lib/raptor-templates"
-        clientImpl.main('/raptor-templates@0.1.0-SNAPSHOT', 'runtime/lib/raptor-templates');
+        // If something like "/$/marko" is required then
+        // use "/$/marko/runtime/lib/marko"
+        clientImpl.main('/marko@0.1.0-SNAPSHOT', 'runtime/lib/marko');
 
-        clientImpl.def('/raptor-render-context@0.1.0-SNAPSHOT/lib/raptor-render-context', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def('/async-writer@0.1.0-SNAPSHOT/lib/async-writer', function(require, exports, module, __filename, __dirname) {
             exports.RAPTOR_RENDER_CONTEXT = true;
         });
 
-        clientImpl.main('/raptor-render-context@0.1.0-SNAPSHOT', 'lib/raptor-render-context');
+        clientImpl.main('/async-writer@0.1.0-SNAPSHOT', 'lib/async-writer');
 
-        // install dependency /$/raptor-templates/$/raptor-render-context (version 0.1.0-SNAPSHOT)
-        clientImpl.dep('/$/raptor-templates', 'raptor-render-context', '0.1.0-SNAPSHOT');
+        // install dependency /$/marko/$/async-writer (version 0.1.0-SNAPSHOT)
+        clientImpl.dep('/$/marko', 'async-writer', '0.1.0-SNAPSHOT');
 
         clientImpl.def('/main', function(require, exports, module, __filename, __dirname) {
-            raptorTemplatesModule = require('raptor-templates');
+            markoModule = require('marko');
         });
 
         clientImpl.run('/main');
 
-        expect(raptorTemplatesModule.RAPTOR_TEMPLATES).to.equal(true);
-        expect(raptorTemplatesModule.raptorRenderContext.RAPTOR_RENDER_CONTEXT).to.equal(true);
+        expect(markoModule.RAPTOR_TEMPLATES).to.equal(true);
+        expect(markoModule.raptorRenderContext.RAPTOR_RENDER_CONTEXT).to.equal(true);
 
     });
 
