@@ -13,11 +13,11 @@
     "dependencies": {
         "app-module-path": "^0.1.0",
         "app-root-dir": "^1.0.0",
-        "raptor-async": "^1.0.0-beta",
-        "raptor-logging": "^1.0.0-beta",
-        "raptor-polyfill": "^1.0.0-beta",
-        "raptor-promises": "^1.0.0-beta",
-        "raptor-util": "^1.0.0-beta",
+        "raptor-async": "^1.0.0",
+        "raptor-logging": "^1.0.0",
+        "raptor-polyfill": "^1.0.0",
+        "raptor-promises": "^1.0.0",
+        "raptor-util": "^1.0.0",
         "through": "^2.3.4"
     },
     "devDependencies": {
