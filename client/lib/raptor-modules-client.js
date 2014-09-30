@@ -10,6 +10,10 @@ https://github.com/joyent/node/blob/master/lib/module.js
 (function() {
     var win = typeof window === 'undefined' ? null : window;
 
+    if (win && win.$rmod) {
+        return;
+    }
+    
     // this object stores the module factories with the keys being real paths of module (e.g. "/baz@3.0.0/lib/index" --> Function)
     var definitions = {};
 
