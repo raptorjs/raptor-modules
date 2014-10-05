@@ -1,3 +1,4 @@
+require('raptor-polyfill/string/startsWith');
 var ok = require('assert').ok;
 var nodePath = require('path');
 var tryPackage = require('../../util').tryPackage;
@@ -26,15 +27,17 @@ BrowserOverrides.prototype = {
             }
             else {
                 for (var source in browser) {
-                    var resolvedSource = source;
-                    var target = browser[source];
+                    if (browser.hasOwnProperty(source)) {
+                        var resolvedSource = source;
+                        var target = browser[source];
 
-                    if (source.startsWith('./')) {
-                        resolvedSource = nodePath.join(this.dirname, source);
+                        if (source.startsWith('./')) {
+                            resolvedSource = nodePath.join(this.dirname, source);
+                        }
+
+                        this.overrides[resolvedSource] = target;
                     }
-
-                    this.overrides[resolvedSource] = target;
-                }    
+                }
             }
         }
     },
@@ -44,7 +47,7 @@ BrowserOverrides.prototype = {
         if (target === undefined) {
 
             var current = this;
-            
+
             while (current) {
                 target = current.overrides[requested];
                 if (target) {
@@ -58,7 +61,7 @@ BrowserOverrides.prototype = {
                         target = {
                             name: target,
                             from: current.dirname
-                        };    
+                        };
                     }
 
                     break;
@@ -70,7 +73,7 @@ BrowserOverrides.prototype = {
             if (!target) {
                 target = null;
             }
-            
+
 
             this.targetCache[requested] = target;
         }
@@ -92,7 +95,7 @@ function loadBrowserOverridesHelper(dirname) {
             return browserOverrides;
         }
     }
-    
+
     // We are not the root package so try moving up a directory
     // to attach a parent to these browser overrides
     var parentDirname = nodePath.dirname(dirname);
@@ -107,7 +110,7 @@ function loadBrowserOverridesHelper(dirname) {
 getBrowserOverrides = function(dirname) {
     ok(dirname, '"dirname" is required');
     ok(typeof dirname === 'string', '"dirname" must be a string');
-    
+
     var browserOverrides = browserOverridesByDir[dirname];
 
     if (browserOverrides === undefined) {
