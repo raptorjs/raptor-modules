@@ -40,7 +40,11 @@ function getPathInfo(path, options) {
     var removeExt = options.removeExt !== false;
 
     var root = options.root || getProjectRootDir(path);
-    path = path.replace(/[\\]/g, '/');
+
+    if (nodePath.sep !== '/') {
+        path = path.replace(/[\\]/g, '/');
+        root = root.replace(/[\\]/g, '/');
+    }
 
     var lastNodeModules = path.lastIndexOf('node_modules/');
     var logicalPath;
