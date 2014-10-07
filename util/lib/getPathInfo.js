@@ -9,9 +9,10 @@ var getProjectRootDir = raptorModulesUtil.getProjectRootDir;
 var getModuleRootPackage = raptorModulesUtil.getModuleRootPackage;
 var findMain = raptorModulesUtil.findMain;
 var getBrowserOverrides = require('./browser-overrides').getBrowserOverrides;
+var sep = nodePath.sep;
 
 function normalizeDepDirnames(path) {
-    var parts = path.split('/');
+    var parts = path.split(/[\\/]/);
     for (var i=0, len=parts.length; i<len; i++) {
         if (parts[i] === 'node_modules') {
             parts[i] = '$';
@@ -20,7 +21,6 @@ function normalizeDepDirnames(path) {
 
     return parts.join('/');
 }
-
 
 function removeRegisteredExt(path) {
     var basename = nodePath.basename(path);
@@ -41,12 +41,7 @@ function getPathInfo(path, options) {
 
     var root = options.root || getProjectRootDir(path);
 
-    if (nodePath.sep !== '/') {
-        path = path.replace(/[\\]/g, '/');
-        root = root.replace(/[\\]/g, '/');
-    }
-
-    var lastNodeModules = path.lastIndexOf('node_modules/');
+    var lastNodeModules = path.lastIndexOf('node_modules' + sep);
     var logicalPath;
     var realPath;
     var dep;
@@ -64,9 +59,9 @@ function getPathInfo(path, options) {
         logicalPath = normalizeDepDirnames(path.substring(root.length));
 
         if (lastNodeModules !== -1) {
-            var nodeModulesDir = path.substring(0, lastNodeModules + 'node_modules/'.length);
+            var nodeModulesDir = path.substring(0, lastNodeModules + ('node_modules' + sep).length);
 
-            var moduleNameEnd = path.indexOf('/', nodeModulesDir.length);
+            var moduleNameEnd = path.indexOf(sep, nodeModulesDir.length);
             if (moduleNameEnd === -1) {
                 moduleNameEnd = path.length;
             }
@@ -109,7 +104,10 @@ function getPathInfo(path, options) {
         // console.log('RESOLVE LINKED MODULE: ', '\npath: ', path, '\nrealPath: ', realPath, '\nlogicalPath: ', logicalPath, '\ndep: ', dep, '\nmoduleRootPkg.__dirname: ', moduleRootPkg.__dirname);
     }
 
-
+    if (sep !== '/') {
+        realPath = realPath.replace(/[\\]/g, '/');
+        logicalPath = logicalPath.replace(/[\\]/g, '/');
+    }
 
     var isDir = stat.isDirectory();
     var main;
