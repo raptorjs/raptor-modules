@@ -40,7 +40,7 @@ function stat(filePath, callback) {
             dataHolder.resolve(createStat(stat));
         });
     }
-    
+
     dataHolder.done(callback);
 }
 
@@ -88,4 +88,8 @@ exports.existsSync = function(filePath) {
 
 exports.isDirectorySync = function(filePath) {
     return statSync(filePath).isDirectory();
+};
+
+exports.clear = function() {
+    cache = {};
 };
