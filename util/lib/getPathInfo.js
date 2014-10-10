@@ -55,7 +55,7 @@ function getPathInfo(path, options) {
     var version;
     var basePath;
 
-    if (path.startsWith(root)) {
+    if (!options.makeRoot && path.startsWith(root)) {
         logicalPath = normalizeDepDirnames(path.substring(root.length));
 
         if (lastNodeModules !== -1) {
