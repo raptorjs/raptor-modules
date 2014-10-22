@@ -21,7 +21,7 @@ function resolveRequire(target, from, options) {
             from = stat.isDirectory() ? resolvedPath : nodePath.dirname(resolvedPath);
         }
     }
-    
+
     var browserOverrides = moduleUtil.getBrowserOverrides(from);
     var browserOverride;
 
@@ -30,11 +30,10 @@ function resolveRequire(target, from, options) {
         if (browserOverrides && (target.charAt(0) !== '.' && target.charAt(0) !== '/')) {
             // This top-level module might be mapped to a completely different module
             // based on the module metadata in package.json
-            
+
             var remappedModule = browserOverrides.getRemappedModuleInfo(target, from);
 
             if (remappedModule) {
-                // console.log('BROWSER OVERRIDE: ', remappedModule);
                 browserOverride = resolveRequire(remappedModule.name, remappedModule.from, options);
                 browserOverride.dep.childName = target;
                 browserOverride.dep.remap = remappedModule.name;
@@ -76,7 +75,7 @@ function resolveRequire(target, from, options) {
             return null;
         });
     }
-    
+
     if (resolvedPath) {
         var pathInfo = moduleUtil.getPathInfo(resolvedPath, options);
         return pathInfo;
