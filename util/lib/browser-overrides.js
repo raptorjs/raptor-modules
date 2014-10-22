@@ -4,7 +4,6 @@ var nodePath = require('path');
 var tryPackage = require('../../util').tryPackage;
 var findMain = require('../../util').findMain;
 var resolver = require('../../resolver');
-
 var browserOverridesByDir = {};
 
 function BrowserOverrides(dirname) {
@@ -19,13 +18,25 @@ BrowserOverrides.prototype = {
     load: function(pkg) {
         this.dirname = pkg.__dirname;
         var browser = pkg.browser || pkg.browserify;
+        var extname;
 
         if (browser) {
             if (typeof browser === 'string') {
+
+
                 var defaultMain = findMain(this.dirname);
+                extname = nodePath.extname(browser);
+                if (extname) {
+                    // Avoid an infinite loop if the browser override has no effect
+                    // (this was seen in some of the browserify packages)
+                    var absolutePath = nodePath.join(this.dirname, browser);
+                    if (absolutePath === defaultMain) {
+                        return;
+                    }
+                }
+
                 this.overrides[defaultMain] = browser;
-            }
-            else {
+            } else {
                 for (var source in browser) {
                     if (browser.hasOwnProperty(source)) {
                         var resolvedSource = source;
@@ -43,25 +54,33 @@ BrowserOverrides.prototype = {
     },
 
     getRemappedModuleInfo: function(requested, options) {
-        var target = this.targetCache[requested];
-        if (target === undefined) {
+
+        // console.log(module.id, 'getRemappedModuleInfo', requested, new Error().stack);
+        var targetModuleInfo = this.targetCache[requested];
+        var target;
+
+        if (targetModuleInfo === undefined) {
 
             var current = this;
 
             while (current) {
                 target = current.overrides[requested];
                 if (target) {
-
                     if (target.startsWith('.')) {
                         var resolved = resolver.resolveRequire(target, current.dirname, options);
-                        target = {
+                        targetModuleInfo = {
                             filePath: resolved.filePath
                         };
                     } else {
-                        target = {
-                            name: target,
-                            from: current.dirname
-                        };
+
+
+
+                        if (!targetModuleInfo) {
+                            targetModuleInfo = {
+                                name: target,
+                                from: current.dirname
+                            };
+                        }
                     }
 
                     break;
@@ -70,15 +89,15 @@ BrowserOverrides.prototype = {
                 current = current.parent;
             }
 
-            if (!target) {
-                target = null;
+            if (!targetModuleInfo) {
+                targetModuleInfo = null;
             }
 
 
-            this.targetCache[requested] = target;
+            this.targetCache[requested] = targetModuleInfo;
         }
 
-        return target;
+        return targetModuleInfo;
     }
 };
 
