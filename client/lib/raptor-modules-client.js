@@ -13,7 +13,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
     if (win && win.$rmod) {
         return;
     }
-    
+
     // this object stores the module factories with the keys being real paths of module (e.g. "/baz@3.0.0/lib/index" --> Function)
     var definitions = {};
 
@@ -328,6 +328,12 @@ https://github.com/joyent/node/blob/master/lib/module.js
     }
 
     function resolveModule(target, from) {
+        if (target.charAt(target.length-1) === '/') {
+            // This is a hack because I found require('util/') in the wild and
+            // it did not work because of the trailing slash
+            target = target.slice(0, -1);
+        }
+
         var len = searchPaths.length;
         for (var i = 0; i < len; i++) {
             // search path entries always end in "/";
