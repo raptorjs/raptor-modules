@@ -40,6 +40,7 @@ function getPathInfo(path, options) {
     var removeExt = options.removeExt !== false;
 
     var root = options.root || getProjectRootDir(path);
+    var additionalRemaps = options.remap;
 
     var lastNodeModules = path.lastIndexOf('node_modules' + sep);
     var logicalPath;
@@ -123,21 +124,38 @@ function getPathInfo(path, options) {
             };
         }
     } else {
+        var overridePathInfo;
+        var remapTo;
+        var targetFile = additionalRemaps && additionalRemaps[path];
+        var dirname = nodePath.dirname(path);
+
+        if (targetFile) {
+            // First handle "remap" passed from the options
+            ok(targetFile, 'targetFile is null');
+
+            remapTo = normalizeDepDirnames(nodePath.relative(dirname, targetFile));
+
+            overridePathInfo = getPathInfo(targetFile, options);
+            overridePathInfo.isBrowserOverride = true;
+            overridePathInfo.remap = {
+                from: realPath,
+                to: removeExt ? removeRegisteredExt(remapTo) : remapTo
+            };
+            return overridePathInfo;
+        }
 
         if (removeExt) {
             logicalPath = removeRegisteredExt(logicalPath);
             realPath = removeRegisteredExt(realPath);
         }
 
-        var dirname = nodePath.dirname(path);
-
         var browserOverrides = getBrowserOverrides(dirname);
         if (browserOverrides) {
+
             var browserOverride = browserOverrides.getRemappedModuleInfo(path, options);
 
             if (browserOverride) {
-                var overridePathInfo;
-                var targetFile;
+
 
                 if (browserOverride.filePath) {
                     targetFile = browserOverride.filePath;
@@ -153,7 +171,7 @@ function getPathInfo(path, options) {
                     throw new Error('Invalid browser override for "' + path + '": ' + require('util').inspect(path));
                 }
 
-                var remapTo = normalizeDepDirnames(nodePath.relative(dirname, targetFile));
+                remapTo = normalizeDepDirnames(nodePath.relative(dirname, targetFile));
 
                 remap = {
                     from: realPath,
