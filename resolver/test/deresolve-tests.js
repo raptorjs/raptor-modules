@@ -107,5 +107,30 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         expect(deresolvedPath).to.equal('bar');
     });
 
+    it('should resolve correctly when there is a nested node_modules within the search path', function() {
+        var Module = require('module').Module;
+        var projectPath = nodePath.join(__dirname, 'test-project');
+        var old_nodeModulePaths = Module._nodeModulePaths;
+
+        // HACK: Make sure projectPath is the first path entry
+        Module._nodeModulePaths = function(from) {
+            var paths = old_nodeModulePaths.call(this, from);
+            paths.unshift(projectPath);
+            return paths;
+        };
+
+        var resolver = require('../');
+        var path = nodePath.join(__dirname, 'test-project/node_modules/foo/lib/foo.js');
+        var from = nodePath.join(__dirname, 'test-project/src/hello-world');
+
+        expect(Module._nodeModulePaths(from)[0]).to.equal(projectPath);
+
+        var deresolvedPath = resolver.deresolve(path, from);
+
+        // UNHACK
+        Module._nodeModulePaths = old_nodeModulePaths;
+
+        expect(deresolvedPath).to.equal('foo/lib/foo');
+    });
 });
 

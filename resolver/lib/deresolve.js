@@ -84,6 +84,10 @@ function deresolve(path, from) {
 			// Example:
 			// searchPath: '/my-project/node_modules
 			// path:       '/my-project/node_modules/foo/lib/index.js'
+
+			if (path.indexOf('/node_modules/', searchPath.length) !== -1) {
+				continue;
+			}
 			
 			var moduleDirname = getModuleDirnameFromSearchPath(path, searchPath);
 			var main = raptorModulesUtil.findMain(moduleDirname);
