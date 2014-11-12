@@ -16,6 +16,7 @@ deresolve('/my-project/src/bar.js', '/my-project/src/index.js') -->
 var nodePath = require('path');
 var Module = require('module').Module;
 var raptorModulesUtil = require('../../util');
+var nodeModulesPrefixRegExp = /^node_modules[\\\/](.+)/;
 
 function removeRegisteredExt(path) {
     var basename = nodePath.basename(path);
@@ -79,31 +80,33 @@ function deresolve(path, from) {
 
 	for (var i=0, len=paths.length; i<len; i++) {
 		var searchPath = paths[i];
-		
+
 		if (path.startsWith(searchPath)) {
 			// Example:
 			// searchPath: '/my-project/node_modules
 			// path:       '/my-project/node_modules/foo/lib/index.js'
 
-			if (path.indexOf('/node_modules/', searchPath.length) !== -1) {
-				continue;
-			}
-			
 			var moduleDirname = getModuleDirnameFromSearchPath(path, searchPath);
 			var main = raptorModulesUtil.findMain(moduleDirname);
 			if (main === path) {
 				// The target path is the main file for the module in the search path
 				return nodePath.basename(moduleDirname);
 			}
-			
+
 			fromSearchPath = path.substring(searchPath.length+1); // Example: foo/index.js
 			fromSearchPath = removeRegisteredExt(fromSearchPath); // Remove the file extension if well-known
-			return fromSearchPath;
+
+            var matches = nodeModulesPrefixRegExp.exec(fromSearchPath);
+            if (matches) {
+                return matches[1];
+            }
+
+            return fromSearchPath;
 		}
 	}
 
 	return relPath(path, from);
-	
+
 }
 
 module.exports = deresolve;
