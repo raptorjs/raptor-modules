@@ -1075,4 +1075,45 @@ describe('raptor-modules/client' , function() {
 
         done();
     });
+
+    it('should handle requiring of a pre-resolved absolute paths', function(done) {
+        var clientImpl = require('../');
+        clientImpl.ready();
+        clientImpl.main("/foo@1.0.0", "index");
+        clientImpl.dep("", "foo", "1.0.0");
+
+        clientImpl.main("/bar@2.0.0", "index");
+        clientImpl.dep("/$/foo", "bar", "2.0.0");
+
+        // define a module for a given real path
+        clientImpl.def('/foo@1.0.0/index', function(require, exports, module, __filename, __dirname) {
+            module.exports = {
+                __filename: __filename,
+                __dirname: __dirname
+            };
+        });
+
+        // define a module for a given real path
+        clientImpl.def('/bar@2.0.0/index', function(require, exports, module, __filename, __dirname) {
+            module.exports = {
+                __filename: __filename,
+                __dirname: __dirname
+            };
+        });
+
+        // define a module for a given real path
+        clientImpl.def('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+            module.exports = {
+                bar: require('/$/foo/$/bar/index'),
+                __filename: __filename,
+                __dirname: __dirname
+            };
+        });
+
+        // you can also require the instance again if you really want to
+        var launch = clientImpl.require('/app/launch/index', '/');
+        expect(launch.bar.__filename).to.equal('/$/foo/$/bar/index');
+
+        done();
+    });
 });
