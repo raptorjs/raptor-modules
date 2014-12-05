@@ -118,6 +118,11 @@ function getPathInfo(path, options) {
         var mainFilePath = findMain(path);
         if (mainFilePath) {
             var mainRelPath = removeRegisteredExt(nodePath.relative(path, mainFilePath));
+
+            if (sep !== '/') {
+                mainRelPath = mainRelPath.replace(/[\\]/g, '/');
+            }
+
             main = {
                 filePath: mainFilePath,
                 path: mainRelPath
@@ -134,6 +139,10 @@ function getPathInfo(path, options) {
             ok(targetFile, 'targetFile is null');
 
             remapTo = normalizeDepDirnames(nodePath.relative(dirname, targetFile));
+
+            if (sep !== '/') {
+                remapTo = remapTo.replace(/[\\]/g, '/');
+            }
 
             overridePathInfo = getPathInfo(targetFile, options);
             overridePathInfo.isBrowserOverride = true;
