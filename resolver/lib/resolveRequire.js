@@ -42,7 +42,7 @@ function resolveRequire(target, from, options) {
             }
         }
 
-        var hasExt = target.lastIndexOf('.') !== -1;
+        var hasExt = nodePath.extname(target) !== '';
 
         resolvedPath = searchPath.find(target, from, function(path) {
 
@@ -61,6 +61,7 @@ function resolveRequire(target, from, options) {
                 for (var ext in extensions) {
                     if (extensions.hasOwnProperty(ext) && ext !== '.node') {
                         var pathWithExt = path + ext;
+
                         if (cachingFs.existsSync(pathWithExt)) {
                             return pathWithExt;
                         }
