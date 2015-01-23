@@ -168,7 +168,10 @@ https://github.com/joyent/node/blob/master/lib/module.js
     }
 
     function registerDependency(logicalParentPath, dependencyId, dependencyVersion, dependencyAlsoKnownAs) {
-        var logicalPath = logicalParentPath + '/$/' + dependencyId;
+        var logicalPath = dependencyId.charAt(0) === '.' ?
+            logicalParentPath + dependencyId.substring(1) : // Remove '.' at the beginning
+            logicalParentPath + '/$/' + dependencyId;
+
         dependencies[logicalPath] =  [dependencyVersion];
         if (dependencyAlsoKnownAs !== undefined) {
             dependencies[logicalParentPath + '/$/' + dependencyAlsoKnownAs] =  [dependencyVersion, dependencyId, logicalPath];
@@ -258,7 +261,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
         // Our internal module resolver will return an array with the following properties:
         // - logicalPath: The logical path of the module (used for caching instances)
         // - realPath: The real path of the module (used for instantiating new instances via factory)
-        var realPath = '/' + dependencyId + '@' + dependencyVersion + subpath;
+        var realPath = dependencyVersion && ('/' + dependencyId + '@' + dependencyVersion + subpath);
         logicalPath = logicalPath + subpath;
 
         // return [logicalPath, realPath, factoryOrObject]
@@ -443,6 +446,8 @@ https://github.com/joyent/node/blob/master/lib/module.js
 
     function resolve(target, from) {
         var resolved;
+        var remappedPath;
+
         if (target.charAt(0) === '.') {
             // turn relative path into absolute path
             resolved = resolveAbsolute(join(from, target), target);
@@ -450,8 +455,14 @@ https://github.com/joyent/node/blob/master/lib/module.js
             // handle targets such as "/my/file" or "/$/foo/$/baz"
             resolved = resolveAbsolute(normalizePathParts(target.split('/')));
         } else {
-            // handle targets such as "foo/lib/index"
-            resolved = resolveModule(target, from);
+            remappedPath = remapped[target];
+            if (remappedPath) {
+                // The remapped path should be a complete logical path
+                return resolve(remappedPath);
+            } else {
+                // handle targets such as "foo/lib/index"
+                resolved = resolveModule(target, from);
+            }
         }
 
         if (!resolved) {
@@ -460,6 +471,10 @@ https://github.com/joyent/node/blob/master/lib/module.js
 
         var logicalPath = resolved[0];
         var realPath = resolved[1];
+
+        if (!realPath) {
+            return resolve(logicalPath);
+        }
 
         // target is something like "/foo/baz"
         // There is no installed module in the path
@@ -472,10 +487,11 @@ https://github.com/joyent/node/blob/master/lib/module.js
             realPath = join(realPath, relativePath);
         }
 
-        var newRelativePath = remapped[realPath];
-        if (newRelativePath !== undefined) {
-            logicalPath = join(logicalPath + '/..', newRelativePath);
-            realPath = join(realPath + '/..', newRelativePath);
+        remappedPath = remapped[realPath];
+        if (remappedPath !== undefined) {
+            // remappedPath should be treated as a relative path
+            logicalPath = join(logicalPath + '/..', remappedPath);
+            realPath = join(realPath + '/..', remappedPath);
         }
 
         var factoryOrObject = definitions[realPath];

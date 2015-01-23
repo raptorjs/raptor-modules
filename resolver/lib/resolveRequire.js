@@ -4,6 +4,20 @@ var searchPath = require('./search-path');
 var moduleUtil = require('../../util');
 var cachingFs = moduleUtil.cachingFs;
 
+function getParentModuleLogicalPath(path) {
+    var lastDollar = path.lastIndexOf('$');
+    if (lastDollar === -1) {
+        return '';
+    } else {
+        var parentModuleNameEnd = path.indexOf('/', lastDollar+2);
+        if (parentModuleNameEnd === -1) {
+            parentModuleNameEnd = path.length;
+        }
+
+        return path.substring(0, parentModuleNameEnd);
+    }
+}
+
 function resolveRequire(target, from, options) {
     ok(target, '"target" is required');
     ok(typeof target === 'string', '"target" must be a string');
@@ -34,11 +48,47 @@ function resolveRequire(target, from, options) {
             var remappedModule = browserOverrides.getRemappedModuleInfo(target, from);
 
             if (remappedModule) {
-                browserOverride = resolveRequire(remappedModule.name, remappedModule.from, options);
-                browserOverride.dep.childName = target;
-                browserOverride.dep.remap = remappedModule.name;
-                browserOverride.isBrowserOverride = true;
-                return browserOverride;
+                if (remappedModule.name) {
+                    browserOverride = resolveRequire(remappedModule.name, remappedModule.from, options);
+                    browserOverride.dep.childName = target;
+                    browserOverride.dep.remap = remappedModule.name;
+                    browserOverride.isBrowserOverride = true;
+                    return browserOverride;
+                } else if (remappedModule.filePath) {
+                    // We are in a situation where an installed module is remapped to a local file
+                    var fromPathInfo = moduleUtil.getPathInfo(from, options);
+                    var overridePathInfo = moduleUtil.getPathInfo(remappedModule.filePath, options);
+
+                    var parentPath = getParentModuleLogicalPath(fromPathInfo.logicalPath);
+
+                    // We need to calculate a relative path from the root of the module
+                    // to the nested module
+                    var relPath = parentPath === '' ?
+                        '.' + overridePathInfo.logicalPath :
+                        nodePath.relative(parentPath, overridePathInfo.logicalPath);
+
+                    // Make sure the path always starts with './' to indicate that it is relative
+                    if (relPath.charAt(0) !== '.') {
+                        relPath = './' + relPath;
+                    }
+
+                    // Since the user is trying to require an installed module we will add a
+                    // dep that remaps to the calculated child path that will be considered relative
+                    // to the root of the containing module
+
+                    overridePathInfo.dep = {
+                        parentPath: parentPath,
+                        childName: target,
+                        childVersion: null,
+                        remap: relPath
+                    };
+
+                    overridePathInfo.isBrowserOverride = true;
+
+                    return overridePathInfo;
+                } else {
+                    throw new Error('Illegal state');
+                }
             }
         }
 

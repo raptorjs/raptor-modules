@@ -267,10 +267,34 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         var resolved = resolver.resolveRequire(target, from, {root: root});
         // console.log(JSON.stringify(resolved, null ,4));
         expect(/\.js$/.test(resolved.main.filePath)).to.equal(true);
-        
+
     });
 
-    
+    it('should resolve a module with main as a directory and file with the same name', function() {
+        var resolver = require('../');
+        var target = 'baz';
+        var from = nodePath.join(__dirname, 'test-project');
+        var root = nodePath.join(__dirname, 'test-project');
+        var resolved = resolver.resolveRequire(target, from, {root: root});
+        console.log(JSON.stringify(resolved, null ,4));
+        expect(resolved).to.deep.equal({
+
+            logicalPath: '/baz-shim',
+            realPath: '/baz-shim',
+            filePath: nodePath.join(__dirname, 'test-project/baz-shim.js'),
+            isDir: false,
+            dep: {
+                parentPath: '',
+                childName: 'baz',
+                childVersion: null,
+                remap: './baz-shim'
+            },
+            isBrowserOverride: true
+        });
+
+    });
+
+
 
 });
 

@@ -1078,41 +1078,111 @@ describe('raptor-modules/client' , function() {
 
     it('should handle requiring of a pre-resolved absolute paths', function(done) {
         var clientImpl = require('../');
-        clientImpl.ready();
-        clientImpl.main("/foo@1.0.0", "index");
+        clientImpl.remap("/add", "add-browser");
+        clientImpl.main("/foo@1.0.0", "lib/index");
         clientImpl.dep("", "foo", "1.0.0");
+        clientImpl.dep("/$/foo", "./lib/bar-shim", null, "bar");
+        clientImpl.remap("/foo@1.0.0/lib/baz", "baz-browser");
+        clientImpl.dep("", "./hello-shim", null, "hello");
+        clientImpl.main("/world-shim@1.0.0", "lib/index");
+        clientImpl.dep("", "world-shim", "1.0.0", "world");
+        clientImpl.dep("", "world-shim", "1.0.0");
+        clientImpl.dep("", "./jquery-shim", null, "jquery");
 
-        clientImpl.main("/bar@2.0.0", "index");
-        clientImpl.dep("/$/foo", "bar", "2.0.0");
-
-        // define a module for a given real path
-        clientImpl.def('/foo@1.0.0/index', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def("/foo@1.0.0/lib/bar-shim", function(require, exports, module, __filename, __dirname) {
             module.exports = {
+                name: 'bar-shim',
                 __filename: __filename,
                 __dirname: __dirname
             };
         });
 
-        // define a module for a given real path
-        clientImpl.def('/bar@2.0.0/index', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def("/foo@1.0.0/lib/baz-browser", function(require, exports, module, __filename, __dirname) {
             module.exports = {
+                name: 'baz-browser',
                 __filename: __filename,
                 __dirname: __dirname
             };
         });
 
-        // define a module for a given real path
-        clientImpl.def('/app/launch/index', function(require, exports, module, __filename, __dirname) {
+        clientImpl.def("/foo@1.0.0/lib/index", function(require, exports, module, __filename, __dirname) {
+            exports.name = 'foo/lib/index';
+            exports.bar = require('bar');
+            exports.baz = require('./baz');
+            exports.__filename = __filename;
+            exports.__dirname = __dirname;
+        });
+
+        clientImpl.def("/world-shim@1.0.0/lib/index", function(require, exports, module, __filename, __dirname) {
             module.exports = {
-                bar: require('/$/foo/$/bar/index'),
+                name: 'world-shim/lib/index',
                 __filename: __filename,
                 __dirname: __dirname
             };
+        });
+
+        clientImpl.def("/hello-shim", function(require, exports, module, __filename, __dirname) {
+            module.exports = {
+                name: 'hello-shim',
+                __filename: __filename,
+                __dirname: __dirname
+            };
+        });
+
+        clientImpl.def("/add-browser", function(require, exports, module, __filename, __dirname) {
+            module.exports = {
+                name: 'add-browser',
+                __filename: __filename,
+                __dirname: __dirname
+            };
+        });
+
+        clientImpl.def("/jquery-shim", function(require, exports, module, __filename, __dirname) {
+            module.exports = {
+                name: 'jquery-shim',
+                __filename: __filename,
+                __dirname: __dirname
+            };
+        },{"globals":["$","jQuery"]});
+
+        clientImpl.def("/main", function(require, exports, module, __filename, __dirname) {
+
+            var add = require('./add');
+            var foo = require('foo');
+            var hello = require('hello');
+            var world = require('world');
+            var jquery = require('jquery');
+
+            exports.add = add;
+            exports.foo = foo;
+            exports.hello = hello;
+            exports.world = world;
+            exports.jquery = jquery;
         });
 
         // you can also require the instance again if you really want to
-        var launch = clientImpl.require('/app/launch/index', '/');
-        expect(launch.bar.__filename).to.equal('/$/foo/$/bar/index');
+        var main = clientImpl.require('/main', '/');
+
+        expect(main.add.__filename).to.equal('/add-browser');
+        expect(main.add.name).to.equal('add-browser');
+
+        expect(main.foo.bar.__filename).to.equal('/$/foo/lib/bar-shim');
+        expect(main.foo.bar.name).to.equal('bar-shim');
+
+        expect(main.foo.baz.__filename).to.equal('/$/foo/lib/baz-browser');
+        expect(main.foo.baz.name).to.equal('baz-browser');
+
+        expect(main.foo.__filename).to.equal('/$/foo/lib/index');
+        expect(main.foo.name).to.equal('foo/lib/index');
+
+        expect(main.hello.__filename).to.equal('/hello-shim');
+        expect(main.hello.name).to.equal('hello-shim');
+
+        expect(main.world.__filename).to.equal('/$/world-shim/lib/index');
+        expect(main.world.name).to.equal('world-shim/lib/index');
+
+        expect(main.jquery.__filename).to.equal('/jquery-shim');
+        expect(main.jquery.name).to.equal('jquery-shim');
 
         done();
     });
