@@ -20,10 +20,10 @@ https://github.com/joyent/node/blob/master/lib/module.js
     // Search path that will be checked when looking for modules
     var searchPaths = [];
 
-    // The isReady flag is used to determine if "run" modules can
+    // The _ready flag is used to determine if "run" modules can
     // be executed or if they should be deferred until all dependencies
     // have been loaded
-    var isReady = false;
+    var _ready = false;
 
     // If $rmod.run() is called when the page is not ready then
     // we queue up the run modules to be executed later
@@ -558,7 +558,7 @@ https://github.com/joyent/node/blob/master/lib/module.js
             wait = options.wait !== false;
         }
 
-        if (wait && !isReady) {
+        if (wait && !_ready) {
             return runQueue.push(arguments);
         }
 
@@ -569,12 +569,13 @@ https://github.com/joyent/node/blob/master/lib/module.js
      * Mark the page as being ready and execute any of the
      * run modules that were deferred
      */
-    function ready() {
-        isReady = true;
-        for (var i=0; i<runQueue.length; i++) {
-            run.apply(runQueue, runQueue[i]);
+    function ready(value) {
+        if ((_ready = (value !== false))) {
+            for (var i=0; i<runQueue.length; i++) {
+                run.apply(runQueue, runQueue[i]);
+            }
+            runQueue.length = 0;
         }
-        runQueue.length = 0;
     }
 
     function addSearchPath(prefix) {
