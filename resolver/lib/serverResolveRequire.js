@@ -39,7 +39,9 @@ function serverResolveRequire(target, from) {
     });
 
     if (!result) {
-        throw new Error('Module not found: ' + target + ' (from: ' + from + ')');
+        var err = new Error('Module not found: ' + target + ' (from: ' + from + ')');
+        err.code = 'MODULE_NOT_FOUND';
+        throw err;
     }
 
     return result;
