@@ -1,8 +1,7 @@
 var ok = require('assert').ok;
 var nodePath = require('path');
 var searchPath = require('./search-path');
-var cachingFs = require('../../util').cachingFs;
-var isAbsolute = require('../../util').isAbsolute;
+var util = require('../../util');
 
 function serverResolveRequire(target, from) {
     ok(target, '"target" is required');
@@ -10,7 +9,7 @@ function serverResolveRequire(target, from) {
     ok(from, '"from" is required');
     ok(typeof from === 'string', '"from" must be a string');
 
-    if (isAbsolute(target)) {
+    if (util.isAbsolute(target)) {
         // Assume absolute paths have already been resolved...
         // Newer versions of Node.js will have a better test for isAbsolute()
         return target;
@@ -19,20 +18,20 @@ function serverResolveRequire(target, from) {
     var result = searchPath.find(target, from, function(path) {
 
         var dirname = nodePath.dirname(path);
-        if (nodePath.basename(dirname) !== 'node_modules' && cachingFs.isDirectorySync(dirname)) {
+        if (nodePath.basename(dirname) !== 'node_modules' && util.cachingFs.isDirectorySync(dirname)) {
             // Try with the extensions
             var extensions = require.extensions;
             for (var ext in extensions) {
                 if (extensions.hasOwnProperty(ext)) {
                     var pathWithExt = path + ext;
-                    if (cachingFs.isDirectorySync(nodePath.dirname()) && cachingFs.existsSync(pathWithExt)) {
+                    if (util.cachingFs.isDirectorySync(nodePath.dirname()) && util.cachingFs.existsSync(pathWithExt)) {
                         return pathWithExt;
                     }
                 }
             }
         }
 
-        if (cachingFs.existsSync(path)) {
+        if (util.cachingFs.existsSync(path)) {
             return path;
         }
 

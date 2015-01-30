@@ -1,13 +1,11 @@
 require('raptor-polyfill/string/endsWith');
 var nodePath = require('path');
 var Module = require('module').Module;
-var cachingFs = require('../../util').cachingFs;
+var util = require('../../util')
 var sep = nodePath.sep;
-var isAbsolute = require('../../util').isAbsolute;
 
 function find(path, from, callback, thisObj) {
-
-    if (isAbsolute(path)) {
+    if (util.isAbsolute(path)) {
         return callback.call(thisObj, path);
     }
 
@@ -24,7 +22,7 @@ function find(path, from, callback, thisObj) {
 
         for (var i=0, len=paths.length; i<len; i++) {
             var searchPath = paths[i];
-            if (!cachingFs.isDirectorySync(searchPath)) {
+            if (!util.cachingFs.isDirectorySync(searchPath)) {
                 continue;
             }
 
