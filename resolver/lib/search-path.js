@@ -2,17 +2,18 @@ require('raptor-polyfill/string/endsWith');
 var nodePath = require('path');
 var Module = require('module').Module;
 var cachingFs = require('../../util').cachingFs;
+var sep = nodePath.sep;
 
 function find(path, from, callback, thisObj) {
 
-    if (path.startsWith('/') || path.indexOf(':') !== -1) {
+    if (path.startsWith('/') || path.indexOf(':') !== -1) { // FIXME use isAbsolute
         return callback.call(thisObj, path);
     }
 
     if (path.startsWith('./') || path.startsWith('../')) {
         // Don't go through the search paths for relative paths
         var joined = callback.call(thisObj, nodePath.join(from, path));
-        if (joined && joined.endsWith('/')) {
+        if (joined && joined.endsWith(sep)) {
             joined = joined.slice(0, -1);
         }
         return joined;
@@ -25,7 +26,7 @@ function find(path, from, callback, thisObj) {
             if (!cachingFs.isDirectorySync(searchPath)) {
                 continue;
             }
-            
+
             var result = callback.call(thisObj, nodePath.join(searchPath, path));
             if (result) {
                 return result;
