@@ -3,10 +3,11 @@ var nodePath = require('path');
 var Module = require('module').Module;
 var cachingFs = require('../../util').cachingFs;
 var sep = nodePath.sep;
+var isAbsolute = require('../../util').isAbsolute;
 
 function find(path, from, callback, thisObj) {
 
-    if (path.startsWith('/') || path.indexOf(':') !== -1) { // FIXME use isAbsolute
+    if (isAbsolute(path)) {
         return callback.call(thisObj, path);
     }
 

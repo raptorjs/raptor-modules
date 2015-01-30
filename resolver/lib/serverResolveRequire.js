@@ -2,6 +2,7 @@ var ok = require('assert').ok;
 var nodePath = require('path');
 var searchPath = require('./search-path');
 var cachingFs = require('../../util').cachingFs;
+var isAbsolute = require('../../util').isAbsolute;
 
 function serverResolveRequire(target, from) {
     ok(target, '"target" is required');
@@ -9,12 +10,12 @@ function serverResolveRequire(target, from) {
     ok(from, '"from" is required');
     ok(typeof from === 'string', '"from" must be a string');
 
-    if (target.charAt(0) === '/' || target.indexOf(':\\') !== -1) {
+    if (isAbsolute(target)) {
         // Assume absolute paths have already been resolved...
         // Newer versions of Node.js will have a better test for isAbsolute()
         return target;
     }
-    
+
     var result = searchPath.find(target, from, function(path) {
 
         var dirname = nodePath.dirname(path);

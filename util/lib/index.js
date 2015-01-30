@@ -17,3 +17,4 @@ exports.getModuleRootPackage = require('./getModuleRootPackage');
 exports.getModuleRootDir = require('./getModuleRootDir');
 exports.getBrowserOverrides = require('./browser-overrides').getBrowserOverrides;
 exports.getPathInfo = require('./getPathInfo');
+exports.isAbsolute = require('./path').isAbsolute;
