@@ -58,6 +58,9 @@ function getPathInfo(path, options) {
 
     if (!options.makeRoot && path.startsWith(root)) {
         logicalPath = normalizeDepDirnames(path.substring(root.length));
+        if (logicalPath === '') {
+            logicalPath = '/';
+        }
 
         if (lastNodeModules !== -1) {
             var nodeModulesDir = path.substring(0, lastNodeModules + ('node_modules' + sep).length);
