@@ -38,8 +38,7 @@ function findMain(path) {
 
     if (!main) {
         main = findMainForFilename(path, 'index');
-    }
-    else {
+    } else {
 
         main = nodePath.resolve(path, main);
         var stat = cachingFs.statSync(main);
