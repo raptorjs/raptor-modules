@@ -113,6 +113,14 @@ function getPathInfo(path, options) {
         logicalPath = logicalPath.replace(/[\\]/g, '/');
     }
 
+    if (realPath.endsWith('/')) {
+        realPath = realPath.slice(0, -1);
+    }
+
+    if (logicalPath.endsWith('/')) {
+        logicalPath = logicalPath.slice(0, -1);
+    }
+
     var isDir = stat.isDirectory();
     var main;
     var remap;
