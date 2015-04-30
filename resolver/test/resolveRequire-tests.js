@@ -276,7 +276,7 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         var from = nodePath.join(__dirname, 'test-project');
         var root = nodePath.join(__dirname, 'test-project');
         var resolved = resolver.resolveRequire(target, from, {root: root});
-        console.log(JSON.stringify(resolved, null ,4));
+        // console.log(JSON.stringify(resolved, null ,4));
         expect(resolved).to.deep.equal({
 
             logicalPath: '/baz-shim',
