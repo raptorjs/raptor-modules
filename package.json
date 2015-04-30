@@ -6,7 +6,11 @@
         "url": "https://github.com/raptorjs/raptor-modules.git"
     },
     "scripts": {
-        "test": "node_modules/.bin/mocha --ui bdd --reporter spec ./test && node_modules/.bin/mocha --ui bdd --reporter spec ./transport/test && node_modules/.bin/mocha --ui bdd --reporter spec ./client/test && node_modules/.bin/mocha --ui bdd --reporter spec ./optimizer/test && node_modules/.bin/mocha --ui bdd --reporter spec ./resolver/test && node_modules/.bin/mocha --ui bdd --reporter spec ./util/test"
+        "test": "npm run test-transport && npm run test-client && npm run test-resolver && npm run test-util",
+        "test-transport": "node_modules/.bin/mocha --ui bdd --reporter spec ./transport/test",
+        "test-client": "node_modules/.bin/mocha --ui bdd --reporter spec ./client/test",
+        "test-resolver": "node_modules/.bin/mocha --ui bdd --reporter spec ./resolver/test",
+        "test-util": "node_modules/.bin/mocha --ui bdd --reporter spec ./util/test"
     },
     "author": "Patrick Steele-Idem <pnidem@gmail.com>",
     "maintainers": "Patrick Steele-Idem <pnidem@gmail.com>",
