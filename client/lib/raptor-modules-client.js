@@ -49,6 +49,15 @@ https://github.com/joyent/node/blob/master/lib/module.js
 
     var cacheByDirname = {};
 
+    // When a module is mapped to a global varialble we add a reference
+    // that maps the real path of the module to the loaded global instance.
+    // We use this mapping to ensure that global modules are only loaded
+    // once if they map to the same real path.
+    //
+    // See issue #5 - Ensure modules mapped to globals only load once
+    // https://github.com/raptorjs/raptor-modules/issues/5
+    var loadedGlobalsByRealPath = {};
+
     // temporary variable for referencing a prototype
     var proto;
 
@@ -154,7 +163,8 @@ https://github.com/joyent/node/blob/master/lib/module.js
         if (globals) {
             var target = win || global;
             for (var i=0;i<globals.length; i++) {
-                target[globals[i]] = require(realPath, realPath);
+                var globalVarName = globals[i];
+                loadedGlobalsByRealPath[realPath] = target[globalVarName] = require(realPath, realPath);
             }
         }
     }
@@ -534,6 +544,19 @@ https://github.com/joyent/node/blob/master/lib/module.js
         if (module !== undefined) {
             // found cached entry based on the logical path
             return module.exports;
+        }
+
+        // Fixes issue #5 - Ensure modules mapped to globals only load once
+        // https://github.com/raptorjs/raptor-modules/issues/5
+        //
+        // If a module is mapped to a global variable then we want to always
+        // return that global instance of the module when it is being required
+        // to avoid duplicate modules being loaded. For modules that are mapped
+        // to global variables we also add an entry that maps the real path
+        // of the module to the global instance of the loaded module.
+        var realPath = resolved[1];
+        if (loadedGlobalsByRealPath.hasOwnProperty(realPath)) {
+            return loadedGlobalsByRealPath[realPath];
         }
 
         var factoryOrObject = resolved[2];

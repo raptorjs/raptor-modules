@@ -1186,4 +1186,37 @@ describe('raptor-modules/client' , function() {
 
         done();
     });
+
+    it('should only load one instance of a module with globals', function() {
+        var clientImpl = require('../');
+        clientImpl.ready();
+
+        var jQueryLoadCounter = 0;
+        var mainJquery;
+
+        clientImpl.def("/jquery@1.11.3/dist/jquery", function(require, exports, module, __filename, __dirname) {
+            exports.isJquery = true;
+
+            jQueryLoadCounter++;
+
+        },{"globals":["$","jQuery"]});
+
+        var mainDidRun = false;
+
+        clientImpl.def("/jquery-main", function(require, exports, module, __filename, __dirname) {
+            mainDidRun = true;
+            mainJquery = require('jquery');
+        });
+
+        clientImpl.main("/jquery@1.11.3", "dist/jquery");
+        clientImpl.dep("", "jquery", "1.11.3");
+        clientImpl.run('/jquery-main');
+
+        expect(mainDidRun).to.equal(true);
+
+        expect(mainJquery.isJquery).to.equal(true);
+
+        expect(jQueryLoadCounter).to.equal(1);
+        expect(mainJquery).to.equal(global.$);
+    });
 });
