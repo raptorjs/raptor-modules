@@ -81,6 +81,8 @@ function deresolve(path, from) {
 	for (var i=0, len=paths.length; i<len; i++) {
 		var searchPath = paths[i];
 
+        searchPath = searchPath.replace(/[\\/]$/, '');
+
 		if (path.startsWith(searchPath)) {
 			// Example:
 			// searchPath: '/my-project/node_modules
