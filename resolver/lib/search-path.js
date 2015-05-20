@@ -9,15 +9,14 @@ function find(path, from, callback, thisObj) {
         return callback.call(thisObj, path);
     }
 
-    if (path.startsWith('./') || path.startsWith('../')) {
+    if (path.charAt(0) === '.') {
         // Don't go through the search paths for relative paths
         var joined = callback.call(thisObj, nodePath.join(from, path));
         if (joined && joined.endsWith(sep)) {
             joined = joined.slice(0, -1);
         }
         return joined;
-    }
-    else {
+    } else {
         var paths = Module._nodeModulePaths(from);
 
         for (var i=0, len=paths.length; i<len; i++) {
