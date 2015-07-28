@@ -18,6 +18,25 @@ function getParentModuleLogicalPath(path) {
     }
 }
 
+/**
+ * @param {String} target the path being required (can be relative path, absolute path, or module name)
+ * @param {String} from the path from which the target is being required
+ *      (this is used to assist with module resolution and making relative paths absolute)
+ * @param {Boolean} options.removeExt remove extension? (optional, default: true)
+ * @param {String} options.root the project root directory (optional, default: getProjectRootDir(from))
+ * @param {Object} options.remap additional remapping rules (optional)
+ * @param {Boolean} options.makeRoot a linked in module (via "npm link <modulename>")
+ *      will be external to project but we can force these to be resolved as if they are in project
+ *
+ * @return {Object} object with these properties
+ *      - filePath
+ *      - logicalPath
+ *      - realPath
+ *      - isDir
+ *      - isBrowserOverride
+ *      - remap
+ *      - main
+ */
 function resolveRequire(target, from, options) {
     ok(target, '"target" is required');
     ok(typeof target === 'string', '"target" must be a string');
@@ -36,20 +55,20 @@ function resolveRequire(target, from, options) {
         }
     }
 
-    var browserOverrides = moduleUtil.getBrowserOverrides(from);
-    var browserOverride;
-
     if (!resolvedPath) {
+        var browserOverrides;
 
-        if (browserOverrides && (target.charAt(0) !== '.' && target.charAt(0) !== '/')) {
+        // If target does not start with "." or "/" then we assume
+        // that the target is a module name and we check to see if
+        // we need to remap the module name if browser overrides
+        // exist.
+        if (/^[^\.\/]/.test(target) && (browserOverrides = moduleUtil.getBrowserOverrides(from))) {
             // This top-level module might be mapped to a completely different module
             // based on the module metadata in package.json
-
             var remappedModule = browserOverrides.getRemappedModuleInfo(target, from);
-
             if (remappedModule) {
                 if (remappedModule.name) {
-                    browserOverride = resolveRequire(remappedModule.name, remappedModule.from, options);
+                    var browserOverride = resolveRequire(remappedModule.name, remappedModule.from, options);
                     browserOverride.dep.childName = target;
                     browserOverride.dep.remap = remappedModule.name;
                     browserOverride.isBrowserOverride = true;

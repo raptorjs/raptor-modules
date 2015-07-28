@@ -60,41 +60,32 @@ BrowserOverrides.prototype = {
         var target;
 
         if (targetModuleInfo === undefined) {
-
+            // there is no cache entry for this request
             var current = this;
 
             while (current) {
                 target = current.overrides[requested];
                 if (target) {
+                    // there is a browser override at this level
                     if (target.startsWith('.')) {
                         var resolved = resolver.resolveRequire(target, current.dirname, options);
                         targetModuleInfo = {
                             filePath: resolved.filePath
                         };
                     } else {
-
-
-
-                        if (!targetModuleInfo) {
-                            targetModuleInfo = {
-                                name: target,
-                                from: current.dirname
-                            };
-                        }
+                        targetModuleInfo = {
+                            name: target,
+                            from: current.dirname
+                        };
                     }
-
                     break;
                 }
 
+                // move up to parent project (if exists) which might have its own overrides
                 current = current.parent;
             }
 
-            if (!targetModuleInfo) {
-                targetModuleInfo = null;
-            }
-
-
-            this.targetCache[requested] = targetModuleInfo;
+            this.targetCache[requested] = targetModuleInfo || null;
         }
 
         return targetModuleInfo;

@@ -294,7 +294,41 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
 
     });
 
+    it('should handle browser file overrides in form "browser": "index-browser.js"', function() {
+        /*
+         * This test was added to make sure we support package.json that looks
+         * something like this:
+         * {
+         *     "name": "test-project",
+         *     "version": "0.0.0",
+         *     "main": "index.js",
+         *     "browser": "index-browser.js"
+         * }
+         *
+         * In this example, the "browser" property looks like a module
+         * name so we need to try resolving it as a module and then
+         * as a relative path if module resolution failed
+         * (this is done to be consistent with browserify)
+         */
+        var resolver = require('../');
 
+        var fromDir = nodePath.join(__dirname, 'test-project-index-browser');
+        var pathInfo = resolver.resolveRequire('./index.js', fromDir, {
+            root: nodePath.join(__dirname, "test-project-index-browser")
+        });
+
+        expect(pathInfo).to.deep.equal({
+            filePath: nodePath.join(__dirname, 'test-project-index-browser/index-browser.js'),
+            logicalPath: '/index-browser',
+            realPath: '/index-browser',
+            isDir: false,
+            isBrowserOverride: true,
+            remap: {
+                from: "/index",
+                to: "index-browser"
+            }
+        });
+    });
 
 });
 

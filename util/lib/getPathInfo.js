@@ -169,23 +169,35 @@ function getPathInfo(path, options) {
             realPath = removeRegisteredExt(realPath);
         }
 
+
         var browserOverrides = getBrowserOverrides(dirname);
         if (browserOverrides) {
-
             var browserOverride = browserOverrides.getRemappedModuleInfo(path, options);
-
             if (browserOverride) {
-
-
                 if (browserOverride.filePath) {
+                    // looks like the file should be substituted with
+                    // another file that is relative to the package.json
                     targetFile = browserOverride.filePath;
-
                 } else if (browserOverride.name) {
+                    // It looks like the user wants the path to resolve
+                    // to another module...
+                    // However, if module resolution doesn't work then we'll
+                    // assume that the "module name" was actually a relative path.
                     ok(browserOverride.from, 'browserOverride.from expected');
-
-                    var targetModule = raptorModulesResolver.resolveRequire(browserOverride.name, browserOverride.from);
-                    ok(targetModule.main && targetModule.main.filePath, 'Invalid target module');
-                    targetFile = targetModule.main.filePath;
+                    try {
+                        // first, try resolving as module...
+                        var targetModule = raptorModulesResolver.resolveRequire(
+                                // target:
+                                browserOverride.name,
+                                // from:
+                                browserOverride.from);
+                        ok(targetModule.main && targetModule.main.filePath, 'Invalid target module');
+                        targetFile = targetModule.main.filePath;
+                    } catch(e) {
+                        // Doesn't look like the module existed so we'll assume that
+                        // the "module name" is actually a relative path
+                        targetFile = nodePath.join(browserOverride.from, browserOverride.name);
+                    }
 
                 } else {
                     throw new Error('Invalid browser override for "' + path + '": ' + require('util').inspect(path));
