@@ -232,8 +232,8 @@ function getPathInfo(path, options) {
 
     var result = {
         filePath: path,
-        logicalPath: logicalPath,
-        realPath: realPath,
+        logicalPath: logicalPath || '/',
+        realPath: realPath || '/',
         isDir: isDir
     };
 
