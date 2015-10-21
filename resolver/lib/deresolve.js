@@ -14,7 +14,6 @@ deresolve('/my-project/src/bar.js', '/my-project/src/index.js') -->
 
 
 var nodePath = require('path');
-var Module = require('module').Module;
 var raptorModulesUtil = require('../../util');
 var nodeModulesPrefixRegExp = /^node_modules[\\\/](.+)/;
 var resolveFrom = require('resolve-from');
@@ -31,24 +30,6 @@ function removeRegisteredExt(path) {
     } else {
         return path;
     }
-}
-
-function getModuleDirnameFromSearchPath(path, searchPath) {
-	var dirname = nodePath.dirname(path);
-	var parentDirname = nodePath.dirname(dirname);
-
-	do {
-
-		if (parentDirname === searchPath) {
-			return dirname;
-		}
-
-		parentDirname = nodePath.dirname(parentDirname);
-		dirname = nodePath.dirname(dirname);
-
-	} while (dirname !== searchPath);
-
-	throw new Error('Illegal state for getModuleDirnameFromSearchPath. path=' + path + ', searchPath=' + searchPath);
 }
 
 function relPath(path, from) {
