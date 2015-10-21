@@ -45,7 +45,7 @@ function relPath(path, from) {
 		relativePath = './' + relativePath;
 	}
 
-    relativePath = relativePath.replace(/[\\]g/, '/');
+    relativePath = relativePath.replace(/[\\]/g, '/');
 
 	return relativePath;
 	// var relPathParts = relPath.split(/[\\\/]/);
@@ -106,7 +106,7 @@ function deresolve(targetPath, from) {
         var targetModuleRelPath = nodePath.relative(targetRootDir, targetPath);
 
         deresolvedPath = nodePath.join(targetModuleName, targetModuleRelPath);
-        deresolvedPath = deresolvedPath.replace(/[\\]g/, '/');
+        deresolvedPath = deresolvedPath.replace(/[\\]/g, '/');
 
         try {
             // Try the deresolved path to see if it works... if it doesn't work
@@ -139,7 +139,7 @@ function deresolve(targetPath, from) {
         }
 	}
 
-    deresolvedPath = deresolvedPath.replace(/[\\]g/, '/');
+    deresolvedPath = deresolvedPath.replace(/[\\]/g, '/');
     deresolvedPath = removeRegisteredExt(deresolvedPath);
 
     return deresolvedPath;
