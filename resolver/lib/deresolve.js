@@ -58,6 +58,13 @@ function deresolve(targetPath, from) {
 	var targetRootDir = raptorModulesUtil.getModuleRootDir(targetPath);
 	var fromRootDir = raptorModulesUtil.getModuleRootDir(from);
 
+    // console.log();
+    // console.log('deresolve() - BEGIN');
+    // console.log('    targetPath: ' + targetPath);
+    // console.log('          from: ' + from);
+    // console.log(' targetRootDir: ' + targetRootDir);
+    // console.log('   fromRootDir: ' + fromRootDir);
+
 	if (targetRootDir && fromRootDir && targetRootDir === fromRootDir) {
         // The target module is in the same project... just use a relative path
 		return relPath(targetPath, from);
@@ -66,30 +73,38 @@ function deresolve(targetPath, from) {
     var matches;
     var deresolvedPath;
 
+
+
     if (targetPath.startsWith(fromRootDir)) {
-        // They have a common root so the target path must in an installed module that is
-        // *not* linked in.
-        //
-        // Example:
-        //    targetPath:       /development/my-project/node_modules/foo/lib/index.js
-        //    from:             /development/my-project/lib/index.js
-        //
-        //    targetRootDir:    /development/my-project/node_modules/foo
-        //    fromRootDir:      /development/my-project
-        //
-        //    Expected output:  foo/lib/index.js
-        deresolvedPath = targetPath.substring(fromRootDir.length + 1);
-        // Example: deresolvedPath = node_modules/foo/lib/index.js
+        var fromNodeModulesDir = nodePath.join(fromRootDir, 'node_modules');
 
-        matches = nodeModulesPrefixRegExp.exec(deresolvedPath);
+        if (targetRootDir.startsWith(fromNodeModulesDir)) {
+            // They have a common root so the target path must in an installed module that is
+            // *not* linked in.
+            //
+            // Example:
+            //    targetPath:       /development/my-project/node_modules/foo/lib/index.js
+            //    from:             /development/my-project/lib/index.js
+            //
+            //    targetRootDir:    /development/my-project/node_modules/foo
+            //    fromRootDir:      /development/my-project
+            //
+            //    Expected output:  foo/lib/index.js
+            deresolvedPath = targetPath.substring(fromRootDir.length + 1);
+            // Example: deresolvedPath = node_modules/foo/lib/index.js
 
-        if (matches) {
-            deresolvedPath = matches[1];
-            // Example: deresolvedPath = foo/lib/index.js
+            matches = nodeModulesPrefixRegExp.exec(deresolvedPath);
+
+            if (matches) {
+                deresolvedPath = matches[1];
+                // Example: deresolvedPath = foo/lib/index.js
+            }
         }
-    } else {
-        // The module is linked in so it is in a completely different directory try.
-        // We will try deresolving using the name of the linked in module
+    }
+
+    if (!deresolvedPath) {
+        // The module is linked in or is not installed at the project level.
+        // We will try deresolving using the name of target module
         //
         // Example:
         //    targetPath:       /development/foo/lib/index.js

@@ -5,6 +5,10 @@ CHANGELOG
 
 ## 1.1
 
+### 1.1.2
+
+- Fixes #14 - deresolve broken when dependency is found in non-top-level node_modules dir
+
 ### 1.1.1
 
 - Fixes #12 - deresolve returns paths with backslashes on Windows
