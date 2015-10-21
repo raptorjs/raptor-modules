@@ -1219,4 +1219,25 @@ describe('raptor-modules/client' , function() {
         expect(jQueryLoadCounter).to.equal(1);
         expect(mainJquery).to.equal(global.$);
     });
+
+    it('should handle root paths correctly', function() {
+        var clientImpl = require('../');
+        clientImpl.ready();
+
+        var libIndex = null;
+
+        clientImpl.main("/", "lib/index");
+
+        clientImpl.def('/lib/index', function(require, exports, module, __filename, __dirname) {
+            exports.LIB_INDEX = true;
+        });
+
+        clientImpl.def('/main', function(require, exports, module, __filename, __dirname) {
+            libIndex = require('../');
+        });
+
+        clientImpl.run('/main');
+
+        expect(libIndex.LIB_INDEX).to.equal(true);
+    });
 });

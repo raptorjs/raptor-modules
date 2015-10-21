@@ -245,7 +245,9 @@ https://github.com/joyent/node/blob/master/lib/module.js
     }
 
     function join(from, target) {
-        return normalizePathParts(from.split('/').concat(target.split('/')));
+        var targetParts = target.split('/');
+        var fromParts = from == '/' ? [''] : from.split('/');
+        return normalizePathParts(fromParts.concat(targetParts));
     }
 
     function withoutExtension(path) {
