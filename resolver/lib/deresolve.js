@@ -17,6 +17,10 @@ var nodePath = require('path');
 var Module = require('module').Module;
 var raptorModulesUtil = require('../../util');
 var nodeModulesPrefixRegExp = /^node_modules[\\\/](.+)/;
+var resolveFrom = require('resolve-from');
+
+require('raptor-polyfill/string/startsWith');
+require('raptor-polyfill/string/endsWith');
 
 function removeRegisteredExt(path) {
     var basename = nodePath.basename(path);
@@ -59,6 +63,9 @@ function relPath(path, from) {
 	if (relativePath.charAt(0) !== '.') {
 		relativePath = './' + relativePath;
 	}
+
+    relativePath = relativePath.replace(/[\\]g/, '/');
+
 	return relativePath;
 	// var relPathParts = relPath.split(/[\\\/]/);
 	// if (relPathParts.indexOf('node_modules') === -1) {
@@ -66,49 +73,95 @@ function relPath(path, from) {
 	// }
 }
 
-function deresolve(path, from) {
-	var targetRootDir = raptorModulesUtil.getModuleRootDir(path);
+function deresolve(targetPath, from) {
+	var targetRootDir = raptorModulesUtil.getModuleRootDir(targetPath);
 	var fromRootDir = raptorModulesUtil.getModuleRootDir(from);
 
 	if (targetRootDir && fromRootDir && targetRootDir === fromRootDir) {
-		return relPath(path, from);
+        // The target module is in the same project... just use a relative path
+		return relPath(targetPath, from);
 	}
 
-	var paths = Module._nodeModulePaths(from);
+    var matches;
+    var deresolvedPath;
 
-	var fromSearchPath = null;
+    if (targetPath.startsWith(fromRootDir)) {
+        // They have a common root so the target path must in an installed module that is
+        // *not* linked in.
+        //
+        // Example:
+        //    targetPath:       /development/my-project/node_modules/foo/lib/index.js
+        //    from:             /development/my-project/lib/index.js
+        //
+        //    targetRootDir:    /development/my-project/node_modules/foo
+        //    fromRootDir:      /development/my-project
+        //
+        //    Expected output:  foo/lib/index.js
+        deresolvedPath = targetPath.substring(fromRootDir.length + 1);
+        // Example: deresolvedPath = node_modules/foo/lib/index.js
 
-	for (var i=0, len=paths.length; i<len; i++) {
-		var searchPath = paths[i];
+        matches = nodeModulesPrefixRegExp.exec(deresolvedPath);
 
-        searchPath = searchPath.replace(/[\\/]$/, '');
+        if (matches) {
+            deresolvedPath = matches[1];
+            // Example: deresolvedPath = foo/lib/index.js
+        }
+    } else {
+        // The module is linked in so it is in a completely different directory try.
+        // We will try deresolving using the name of the linked in module
+        //
+        // Example:
+        //    targetPath:       /development/foo/lib/index.js
+        //    from:             /development/my-project/lib/index.js
+        //
+        //    targetRootDir:    /development/foo
+        //    fromRootDir:      /development/my-project
+        //
+        //    Does the following exist?:
+        //    /development/my-project/node_modules/foo/lib/index.js ?
+        //
+        //    Expected output:  foo/lib/index.js
+        var targetModuleName = nodePath.basename(targetRootDir);
+        var targetModuleRelPath = nodePath.relative(targetRootDir, targetPath);
 
-		if (path.startsWith(searchPath)) {
-			// Example:
-			// searchPath: '/my-project/node_modules
-			// path:       '/my-project/node_modules/foo/lib/index.js'
+        deresolvedPath = nodePath.join(targetModuleName, targetModuleRelPath);
+        deresolvedPath = deresolvedPath.replace(/[\\]g/, '/');
 
-			var moduleDirname = getModuleDirnameFromSearchPath(path, searchPath);
-			var main = raptorModulesUtil.findMain(moduleDirname);
-			if (main === path) {
-				// The target path is the main file for the module in the search path
-				return nodePath.basename(moduleDirname);
-			}
+        try {
+            // Try the deresolved path to see if it works... if it doesn't work
+            // then we will just have to calculate a relative path
+            resolveFrom(from, deresolvedPath);
+        } catch(e) {
+            deresolvedPath = null;
+        }
+    }
 
-			fromSearchPath = path.substring(searchPath.length+1); // Example: foo/index.js
-			fromSearchPath = removeRegisteredExt(fromSearchPath); // Remove the file extension if well-known
+    if (!deresolvedPath) {
+        return relPath(targetPath, from);
+    }
 
-            var matches = nodeModulesPrefixRegExp.exec(fromSearchPath);
-            if (matches) {
-                return matches[1];
-            }
+    var targetMain = raptorModulesUtil.findMain(targetRootDir);
 
-            return fromSearchPath;
-		}
+	if (targetMain === targetPath) {
+        // Chop off the ending part that main resolves to
+        // Example:
+        //    targetPath:       /development/my-project/node_modules/foo/lib/index.js
+        //    targetRootDir:    /development/my-project/node_modules/foo
+        //    targetMain:       /development/my-project/node_modules/foo/lib/index.js
+
+        //    deresolvedPath:   foo/lib/index.js
+        //
+        //    Expected output:  foo
+        var extra = targetPath.substring(targetRootDir.length);
+        if (deresolvedPath.endsWith(extra)) {
+            deresolvedPath = deresolvedPath.slice(0, 0 - extra.length);
+        }
 	}
 
-	return relPath(path, from);
+    deresolvedPath = deresolvedPath.replace(/[\\]g/, '/');
+    deresolvedPath = removeRegisteredExt(deresolvedPath);
 
+    return deresolvedPath;
 }
 
 module.exports = deresolve;

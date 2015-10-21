@@ -56,7 +56,7 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
     });
 
     it('should deresolve correctly for sibling file in an installed module', function() {
-        
+
 
         var resolver = require('../');
         var path = nodePath.join(__dirname, 'test-project/node_modules/foo/lib/foo.js');
@@ -68,7 +68,7 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
     });
 
     it('should deresolve correctly for sibling file in a non-installed module', function() {
-        
+
 
         require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));
 
@@ -82,7 +82,7 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
     });
 
     it('should deresolve correctly for sibling main file in a non-installed module', function() {
-        
+
 
         require('app-module-path').addPath(nodePath.join(__dirname, 'test-project/src'));
 
@@ -96,7 +96,7 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
     });
 
     it('should deresolve correctly for one installed module to another', function() {
-        
+
 
         var resolver = require('../');
         var path = nodePath.join(__dirname, 'test-project/node_modules/bar/lib/index.js');
@@ -131,6 +131,32 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         Module._nodeModulePaths = old_nodeModulePaths;
 
         expect(deresolvedPath).to.equal('foo/lib/foo');
+    });
+
+    it('should resolve correctly when there is a nested node_modules within the search path', function() {
+        var Module = require('module').Module;
+        var projectPath = nodePath.join(__dirname, 'test-project');
+        var old_nodeModulePaths = Module._nodeModulePaths;
+
+        // HACK: Make sure projectPath is the first path entry
+        Module._nodeModulePaths = function(from) {
+            var paths = old_nodeModulePaths.call(this, from);
+            paths.unshift(projectPath);
+            return paths;
+        };
+
+        var resolver = require('../');
+        var path = nodePath.join(__dirname, 'test-project/node_modules/bar/node_modules/baz/lib/index.js');
+        var from = nodePath.join(__dirname, 'test-project/src/hello-world');
+
+        expect(Module._nodeModulePaths(from)[0]).to.equal(projectPath);
+
+        var deresolvedPath = resolver.deresolve(path, from);
+
+        // UNHACK
+        Module._nodeModulePaths = old_nodeModulePaths;
+
+        expect(deresolvedPath).to.equal('bar/node_modules/baz');
     });
 });
 
