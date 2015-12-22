@@ -363,6 +363,18 @@ https://github.com/joyent/node/blob/master/lib/module.js
         var subpath;
 
         var lastSlashPos = target.indexOf('/');
+
+        // Fixes https://github.com/raptorjs/raptor-modules/issues/15
+        // Handle scoped packages where scope and package name are separated by a
+        // forward slash (e.g. '@scope/package-name')
+        //
+        // In the case of scoped packages the dependencyId should be the combination of the scope
+        // and the package name. Therefore if the target module begins with an '@' symbol then
+        // skip past the first slash
+        if (lastSlashPos !== -1 && target.charAt(0) === '@') {
+            lastSlashPos = target.indexOf('/', lastSlashPos+1);
+        }
+
         if (lastSlashPos === -1) {
             dependencyId = target;
             subpath = '';

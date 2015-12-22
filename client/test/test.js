@@ -1240,4 +1240,34 @@ describe('raptor-modules/client' , function() {
 
         expect(libIndex.LIB_INDEX).to.equal(true);
     });
+
+    it('should handle scoped modules', function(done) {
+        var clientImpl = require('../');
+        clientImpl.ready();
+
+        var instanceCount = 0;
+
+        // define a module for a given real path
+        clientImpl.def('/@foo/bar@3.0.0/lib/index', function(require, exports, module, __filename, __dirname) {
+            instanceCount++;
+            module.exports = {
+                __filename: __filename,
+                __dirname: __dirname
+            };
+        });
+
+        // Module "foo" requires "baz" 3.0.0
+        // This will create the following link:
+        // /$/foo/$/baz --> baz@3.0.0
+        clientImpl.dep('', '@foo/bar', '3.0.0');
+
+        var fooBar = clientImpl.require('@foo/bar/lib/index', '/$/foo');
+
+        expect(instanceCount).to.equal(1);
+
+        expect(fooBar.__filename).to.equal('/$/@foo/bar/lib/index');
+        expect(fooBar.__dirname).to.equal('/$/@foo/bar/lib');
+
+        done();
+    });
 });

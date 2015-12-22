@@ -74,16 +74,11 @@ function getPathInfo(path, options) {
 
         if (lastNodeModules !== -1) {
             var nodeModulesDir = path.substring(0, lastNodeModules + ('node_modules' + sep).length);
-
-            var moduleNameEnd = path.indexOf(sep, nodeModulesDir.length);
-            if (moduleNameEnd === -1) {
-                moduleNameEnd = path.length;
-            }
-
             var pkg = getModuleRootPackage(path);
             name = pkg.name;
             version = pkg.version;
 
+            var moduleNameEnd = nodeModulesDir.length + name.length;
             basePath = '/' + name + '@' + version;
             realPath = normalizeDepDirnames(basePath + path.substring(moduleNameEnd));
 

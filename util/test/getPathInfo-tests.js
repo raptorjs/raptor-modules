@@ -142,6 +142,24 @@ describe('raptor-modules/util.getPathInfo' , function() {
         });
     });
 
+    it('should handle scoped packages', function() {
+
+        var resolver = require('../');
+        var pathInfo = resolver.getPathInfo(nodePath.join(__dirname, 'test-project/node_modules/@foo/bar/lib/index.js'), {root: nodePath.join(__dirname, "test-project")});
+
+        expect(pathInfo).to.deep.equal({
+            "filePath": "/Users/psteeleidem/development/github/raptorjs/raptor-modules/util/test/test-project/node_modules/@foo/bar/lib/index.js",
+            "logicalPath": "/$/@foo/bar/lib/index",
+            "realPath": "/@foo/bar@3.0.0/lib/index",
+            "isDir": false,
+            "dep": {
+                "parentPath": "",
+                "childName": "@foo/bar",
+                "childVersion": "3.0.0"
+            }
+        });
+    });
+
 
 });
 
