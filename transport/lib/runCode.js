@@ -3,7 +3,7 @@ var through = require('through');
 function runCode(path, runOptions, options) {
     var modulesRuntimeGlobal = (options && options.modulesRuntimeGlobal) || '$rmod';
     return modulesRuntimeGlobal + '.run(' + JSON.stringify(path) +
-        (options ? (',' + JSON.stringify(runOptions)) : '') + ');';
+        (runOptions ? (',' + JSON.stringify(runOptions)) : '') + ');';
 }
 
 module.exports = function(path, runOptions, options) {
