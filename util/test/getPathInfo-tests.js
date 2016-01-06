@@ -148,7 +148,7 @@ describe('raptor-modules/util.getPathInfo' , function() {
         var pathInfo = resolver.getPathInfo(nodePath.join(__dirname, 'test-project/node_modules/@foo/bar/lib/index.js'), {root: nodePath.join(__dirname, "test-project")});
 
         expect(pathInfo).to.deep.equal({
-            "filePath": "/Users/psteeleidem/development/github/raptorjs/raptor-modules/util/test/test-project/node_modules/@foo/bar/lib/index.js",
+            "filePath": nodePath.join(__dirname, 'test-project') + "/node_modules/@foo/bar/lib/index.js",
             "logicalPath": "/$/@foo/bar/lib/index",
             "realPath": "/@foo/bar@3.0.0/lib/index",
             "isDir": false,
