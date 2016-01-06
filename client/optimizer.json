@@ -1,5 +1,5 @@
 {
     "dependencies": [
-        "./lib/raptor-modules-client.js"
+        {"type": "commonjs-runtime"}
     ]
 }

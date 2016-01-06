@@ -1,15 +1,17 @@
 var through = require('through');
 
-function runCode(path, options) {
-    return '$rmod.run(' + JSON.stringify(path) + (options ? (',' + JSON.stringify(options)) : '') + ');';
+function runCode(path, runOptions, options) {
+    var modulesRuntimeGlobal = (options && options.modulesRuntimeGlobal) || '$rmod';
+    return modulesRuntimeGlobal + '.run(' + JSON.stringify(path) +
+        (options ? (',' + JSON.stringify(runOptions)) : '') + ');';
 }
 
-module.exports = function(path, options) {
+module.exports = function(path, runOptions, options) {
 
     var out = through();
     out.pause();
 
-    out.queue(runCode(path, options));
+    out.queue(runCode(path, runOptions, options));
     out.end();
 
     return out;

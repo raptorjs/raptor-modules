@@ -1,6 +1,8 @@
 var through = require('through');
 
-function addSearchPathsCode(paths) {
+function addSearchPathsCode(paths, options) {
+    var modulesRuntimeGlobal = (options && options.modulesRuntimeGlobal) || '$rmod';
+
     var out = through();
     out.pause();
 
@@ -11,9 +13,9 @@ function addSearchPathsCode(paths) {
             path = path + '/';
         }
 
-        out.queue('$rmod.addSearchPath(' + JSON.stringify(path) + ');');
+        out.queue(modulesRuntimeGlobal + '.addSearchPath(' + JSON.stringify(path) + ');');
     }
-    
+
     out.end();
 
     return out;
