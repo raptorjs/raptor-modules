@@ -46,27 +46,28 @@ function removeRegisteredExt(path) {
 function getPathInfo(path, options) {
     ok(typeof path === 'string', 'path should be a string');
     options = options || {};
+    var normalizedPath = nodePath.normalize(path);
 
     var removeExt = options.removeExt !== false;
 
     var root = options.root || getProjectRootDir(path);
     var additionalRemaps = options.remap;
 
-    var lastNodeModules = path.lastIndexOf('node_modules' + sep);
+    var lastNodeModules = normalizedPath.lastIndexOf('node_modules' + sep);
     var logicalPath;
     var realPath;
     var dep;
-    var stat = cachingFs.statSync(path);
+    var stat = cachingFs.statSync(normalizedPath);
 
-    if (!stat.exists(path)) {
-        throw new Error('File does not exist: ' + path);
+    if (!stat.exists(normalizedPath)) {
+        throw new Error('File does not exist: ' + normalizedPath);
     }
 
     var name;
     var version;
     var basePath;
 
-    if (!options.makeRoot && path.startsWith(root)) {
+    if (!options.makeRoot && normalizedPath.startsWith(nodePath.normalize(root))) {
         logicalPath = normalizeDepDirnames(path.substring(root.length));
         if (logicalPath === '') {
             logicalPath = '/';
@@ -173,7 +174,6 @@ function getPathInfo(path, options) {
             logicalPath = removeRegisteredExt(logicalPath);
             realPath = removeRegisteredExt(realPath);
         }
-
 
         var browserOverrides = getBrowserOverrides(dirname);
         if (browserOverrides) {
