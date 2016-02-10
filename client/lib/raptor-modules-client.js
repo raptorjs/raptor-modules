@@ -14,6 +14,9 @@ https://github.com/joyent/node/blob/master/lib/module.js
         return;
     }
 
+    /** the module runtime */
+    var $rmod;
+
     // this object stores the module factories with the keys being real paths of module (e.g. "/baz@3.0.0/lib/index" --> Function)
     var definitions = {};
 
@@ -132,6 +135,9 @@ https://github.com/joyent/node/blob/master/lib/module.js
 
             // NodeJS provides access to the cache as a property of the "require" function
             instanceRequire.cache = instanceCache;
+
+            // Expose the module system runtime via the `runtime` property
+            instanceRequire.runtime = $rmod;
 
             // $rmod.def("/foo@1.0.0/lib/index", function(require, exports, module, __filename, __dirname) {
             this.exports = {};
@@ -600,14 +606,9 @@ https://github.com/joyent/node/blob/master/lib/module.js
     $rmod.run('/$/installed-module', '/src/foo');
     */
     function run(logicalPath, options) {
-        var wait = true;
-
-        if (options) {
-            wait = options.wait !== false;
-        }
-
+        var wait = !options || (options.wait !== false);
         if (wait && !_ready) {
-            return runQueue.push(arguments);
+            return runQueue.push([logicalPath, options]);
         }
 
         require(logicalPath, '/');
@@ -617,12 +618,27 @@ https://github.com/joyent/node/blob/master/lib/module.js
      * Mark the page as being ready and execute any of the
      * run modules that were deferred
      */
-    function ready(value) {
-        if ((_ready = (value !== false))) {
-            for (var i=0; i<runQueue.length; i++) {
-                run.apply(runQueue, runQueue[i]);
+    function ready() {
+        _ready = true;
+
+        var len;
+        while((len = runQueue.length)) {
+            // store a reference to the queue before we reset it
+            var queue = runQueue;
+
+            // clear out the queue
+            runQueue = [];
+
+            // run all of the current jobs
+            for (var i = 0; i < len; i++) {
+                var args = queue[i];
+                run(args[0], args[1]);
             }
-            runQueue.length = 0;
+
+            // stop running jobs in the queue if we change to not ready
+            if (!_ready) {
+                break;
+            }
         }
     }
 
@@ -630,11 +646,20 @@ https://github.com/joyent/node/blob/master/lib/module.js
         searchPaths.push(prefix);
     }
 
+    var pendingCount = 0;
+    var onPendingComplete = function() {
+        pendingCount--;
+        if (!pendingCount) {
+            // Trigger any "require-run" modules in the queue to run
+            ready();
+        }
+    };
+
     /*
      * $rmod is the short-hand version that that the transport layer expects
      * to be in the browser window object
      */
-    var $rmod = {
+    $rmod = {
         // "def" is used to define a module
         def: define,
 
@@ -647,7 +672,22 @@ https://github.com/joyent/node/blob/master/lib/module.js
         resolve: resolve,
         join: join,
         ready: ready,
-        addSearchPath: addSearchPath
+        addSearchPath: addSearchPath,
+
+        /**
+         * Asynchronous bundle loaders should call `pending()` to instantiate
+         * a new job. The object we return here has a `done` method that
+         * should be called when the job completes. When the number of
+         * pending jobs drops to 0, we invoke any of the require-run modules
+         * that have been declared.
+         */
+        pending: function() {
+            _ready = false;
+            pendingCount++;
+            return {
+                done: onPendingComplete
+            };
+        }
     };
 
     if (win) {
@@ -655,5 +695,4 @@ https://github.com/joyent/node/blob/master/lib/module.js
     } else {
         module.exports = $rmod;
     }
-
 })();
