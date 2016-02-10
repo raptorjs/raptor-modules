@@ -117,18 +117,21 @@ function deresolve(targetPath, from) {
         //    /development/my-project/node_modules/foo/lib/index.js ?
         //
         //    Expected output:  foo/lib/index.js
-        var targetModuleName = nodePath.basename(targetRootDir);
-        var targetModuleRelPath = nodePath.relative(targetRootDir, targetPath);
+        var targetModulePkg = raptorModulesUtil.getModuleRootPackage(targetRootDir);
+        if (targetModulePkg) {
+            var targetModuleName = targetModulePkg.name;
+            var targetModuleRelPath = nodePath.relative(targetRootDir, targetPath);
 
-        deresolvedPath = nodePath.join(targetModuleName, targetModuleRelPath);
-        deresolvedPath = deresolvedPath.replace(/[\\]/g, '/');
+            deresolvedPath = nodePath.join(targetModuleName, targetModuleRelPath);
+            deresolvedPath = deresolvedPath.replace(/[\\]/g, '/');
 
-        try {
-            // Try the deresolved path to see if it works... if it doesn't work
-            // then we will just have to calculate a relative path
-            resolveFrom(from, deresolvedPath);
-        } catch(e) {
-            deresolvedPath = null;
+            try {
+                // Try the deresolved path to see if it works... if it doesn't work
+                // then we will just have to calculate a relative path
+                resolveFrom(from, deresolvedPath);
+            } catch(e) {
+                deresolvedPath = null;
+            }
         }
     }
 
