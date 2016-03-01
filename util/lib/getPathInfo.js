@@ -164,7 +164,7 @@ function getPathInfo(path, options) {
             overridePathInfo = getPathInfo(targetFile, options);
             overridePathInfo.isBrowserOverride = true;
             overridePathInfo.remap = {
-                from: realPath,
+                from: removeExt ? removeRegisteredExt(realPath) : realPath,
                 to: removeExt ? removeRegisteredExt(remapTo) : remapTo
             };
             return overridePathInfo;
