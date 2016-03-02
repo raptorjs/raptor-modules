@@ -112,5 +112,49 @@ describe('raptor-modules/transport.defineCode' , function() {
         out.resume();
     });
 
+    it('should allow additional vars (no "use strict")', function() {
+        var transport = require('../');
+        var code = transport.defineCode.sync('/some/path', 'exports.test=true;', {
+            additionalVars: [
+                'foo="bar"'
+            ]
+        });
+
+        expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { var foo="bar"; exports.test=true;\n});');
+    });
+
+    it('should allow additional vars ("use strict";)', function() {
+        var transport = require('../');
+        var code = transport.defineCode.sync('/some/path', '"use strict";\nexports.test=true;', {
+            additionalVars: [
+                'foo="bar"'
+            ]
+        });
+
+        expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { "use strict"; var foo="bar";\nexports.test=true;\n});');
+    });
+
+    it('should allow additional vars (\'use strict\';)', function() {
+        var transport = require('../');
+        var code = transport.defineCode.sync('/some/path', '\'use strict\';\nexports.test=true;', {
+            additionalVars: [
+                'foo="bar"'
+            ]
+        });
+
+        expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { \'use strict\'; var foo="bar";\nexports.test=true;\n});');
+    });
+
+    it('should allow additional vars ("use strict", no semicolon)', function() {
+        var transport = require('../');
+        var code = transport.defineCode.sync('/some/path', '"use strict" \nexports.test=true;', {
+            additionalVars: [
+                'foo="bar"'
+            ]
+        });
+
+        expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { "use strict"; var foo="bar";\nexports.test=true;\n});');
+    });
+
 });
 

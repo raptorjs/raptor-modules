@@ -1,4 +1,5 @@
 var through = require('through');
+var useStrictRegExp = /^(\s*(?:['"]use strict['"]))(?:(\s*[;])|(\s*\n))/;
 
 function defineCode(path, code, options) {
     var isObject = false;
@@ -28,7 +29,24 @@ function defineCode(path, code, options) {
     } else {
         out.push(', function(require, exports, module, __filename, __dirname) { ');
         if (additionalVars && additionalVars.length) {
-            out.push('var ' + additionalVars.join(', ') + '; ');
+            var additionalVarsString = 'var ' + additionalVars.join(', ') + ';';
+
+            var hasUseStrict = false;
+
+            code = code.replace(useStrictRegExp, function(match, start, semicolon, newline) {
+                hasUseStrict = true;
+                if (semicolon) {
+                    out.push(start + semicolon + ' ' + additionalVarsString);
+                } else {
+                    out.push(start + '; ' + additionalVarsString + '\n');
+                }
+
+                return '';
+            });
+
+            if (!hasUseStrict) {
+                out.push(additionalVarsString + ' ');
+            }
         }
     }
 
