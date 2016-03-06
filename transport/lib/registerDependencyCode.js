@@ -7,10 +7,10 @@ function registerDependencyCode(logicalParentPath, childName, childVersion, over
     out.pause();
 
     out.queue(modulesRuntimeGlobal + '.dep(' + JSON.stringify(logicalParentPath) + ', ' +
-        JSON.stringify(overrideName || childName) + ', ' +
+        JSON.stringify(overrideName != null ? overrideName : childName) + ', ' +
         JSON.stringify(childVersion));
 
-    if (overrideName) {
+    if (overrideName != null) {
         out.queue(', ' + JSON.stringify(childName));
     }
 

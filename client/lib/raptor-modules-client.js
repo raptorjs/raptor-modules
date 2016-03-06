@@ -184,6 +184,13 @@ https://github.com/joyent/node/blob/master/lib/module.js
     }
 
     function registerDependency(logicalParentPath, dependencyId, dependencyVersion, dependencyAlsoKnownAs) {
+        if (dependencyId === false) {
+            // This module has been remapped to a "void" module (empty object) for the browser.
+            // Add an entry in the dependencies, but use `null` as the value (handled differently from undefined)
+            dependencies[logicalParentPath + '/$/' + dependencyAlsoKnownAs] = null;
+            return;
+        }
+
         var logicalPath = dependencyId.charAt(0) === '.' ?
             logicalParentPath + dependencyId.substring(1) : // Remove '.' at the beginning
             logicalParentPath + '/$/' + dependencyId;
@@ -342,6 +349,12 @@ https://github.com/joyent/node/blob/master/lib/module.js
             return undefined;
         }
 
+        if (dependencyInfo === null) {
+            // This dependency has been mapped to a void module (empty object). Return an empty
+            // array as an indicator
+            return [];
+        }
+
         return versionedDependencyInfo(
             // dependencyInfo[2] is the logicalPath that the module should actually use
             // if it has been remapped. If dependencyInfo[2] is undefined then we haven't
@@ -421,6 +434,11 @@ https://github.com/joyent/node/blob/master/lib/module.js
         var logicalPath = from + '/$/' + dependencyId;
         var dependencyInfo = dependencies[logicalPath];
         if (dependencyInfo !== undefined) {
+            if (dependencyInfo === null) {
+                // This dependency has been mapped to a void module (empty object). Return an empty
+                // array as an indicator
+                return [];
+            }
             return versionedDependencyInfo(
                 // dependencyInfo[2] is the logicalPath that the module should actually use
                 // if it has been remapped. If dependencyInfo[2] is undefined then we haven't
@@ -459,6 +477,10 @@ https://github.com/joyent/node/blob/master/lib/module.js
 
             dependencyInfo = dependencies[logicalPath];
             if (dependencyInfo !== undefined) {
+                if (dependencyInfo === null) {
+                    return [];
+                }
+
                 return versionedDependencyInfo(
                     // dependencyInfo[2] is the logicalPath that the module should actually use
                     // if it has been remapped. If dependencyInfo[2] is undefined then we haven't
@@ -512,6 +534,12 @@ https://github.com/joyent/node/blob/master/lib/module.js
 
         var logicalPath = resolved[0];
         var realPath = resolved[1];
+
+        if (logicalPath === undefined) {
+            // This dependency has been mapped to a void module (empty object).
+            // Use a special '$' for logicalPath and realPath and an empty object for the factoryOrObject
+            return ['$', '$', {}];
+        }
 
         if (!realPath) {
             return resolve(logicalPath);

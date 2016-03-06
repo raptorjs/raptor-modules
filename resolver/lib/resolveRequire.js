@@ -3,6 +3,7 @@ var nodePath = require('path');
 var searchPath = require('./search-path');
 var moduleUtil = require('../../util');
 var cachingFs = moduleUtil.cachingFs;
+var extend = require('raptor-util/extend');
 
 function getParentModuleLogicalPath(path) {
     var lastDollar = path.lastIndexOf('$');
@@ -67,7 +68,34 @@ function resolveRequire(target, from, options) {
             // based on the module metadata in package.json
             var remappedModule = browserOverrides.getRemappedModuleInfo(target, from);
             if (remappedModule) {
-                if (remappedModule.name) {
+                var fromPathInfo;
+                var parentPath;
+
+                if (remappedModule.voidRemap) {
+                   // We are in a situation where a module is remapped to a void module
+                   var voidRemapInfo = {
+                       voidRemap: true,
+                       isBrowserOverride: true
+                   };
+
+                   if (remappedModule.name) {
+                       // This is an installed module that has been remapped
+                       fromPathInfo = moduleUtil.getPathInfo(from, options);
+                       parentPath = getParentModuleLogicalPath(fromPathInfo.logicalPath);
+                       voidRemapInfo.dep = {
+                           parentPath: parentPath,
+                           childName: target,
+                           childVersion: null,
+                           remap: false
+                       };
+                   } else {
+                       // This is a local module that has been remapped
+                       var overrideFilePathInfo = moduleUtil.getPathInfo(remappedModule.filePath);
+                       extend(voidRemapInfo, overrideFilePathInfo);
+                   }
+
+                   return voidRemapInfo;
+               } else if (remappedModule.name) {
                     var browserOverride = resolveRequire(remappedModule.name, remappedModule.from, options);
                     browserOverride.dep.childName = target;
                     browserOverride.dep.remap = remappedModule.name;
@@ -75,10 +103,10 @@ function resolveRequire(target, from, options) {
                     return browserOverride;
                 } else if (remappedModule.filePath) {
                     // We are in a situation where an installed module is remapped to a local file
-                    var fromPathInfo = moduleUtil.getPathInfo(from, options);
+                    fromPathInfo = moduleUtil.getPathInfo(from, options);
                     var overridePathInfo = moduleUtil.getPathInfo(remappedModule.filePath, options);
 
-                    var parentPath = getParentModuleLogicalPath(fromPathInfo.logicalPath);
+                    parentPath = getParentModuleLogicalPath(fromPathInfo.logicalPath);
 
                     // We need to calculate a relative path from the root of the module
                     // to the nested module
