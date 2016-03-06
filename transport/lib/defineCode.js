@@ -1,5 +1,41 @@
+require('raptor-polyfill/string/endsWith');
+
 var through = require('through');
-var useStrictRegExp = /^(\s*(?:['"]use strict['"]))(?:(\s*[;])|(\s*\n))/;
+
+var tokenizer = require('./util/tokenizer').create([
+        {
+            name: 'useStrict',
+            pattern: /'use strict'\s*(?:[;]|\n)/,
+        },
+        {
+            name: 'useStrict',
+            pattern: /"use strict"\s*(?:[;]|\n)/,
+        },
+        {
+            name: 'stringDouble',
+            pattern: /"(?:[^"]|\\")*"/,
+        },
+        {
+            name: 'stringSingle',
+            pattern: /'(?:[^']|\\')*'/
+        },
+        {
+            name: 'singleLineComment',
+            pattern: /\/\/.*/
+        },
+        {
+            name: 'multiLineComment',
+            pattern: /\/\*(?:[\s\S]*?)\*\//
+        },
+        {
+            name: 'whitespace',
+            pattern: /\s+/
+        },
+        {
+            pattern: /./,
+            stop: true
+        }
+    ]);
 
 function defineCode(path, code, options) {
     var isObject = false;
@@ -29,23 +65,20 @@ function defineCode(path, code, options) {
     } else {
         out.push(', function(require, exports, module, __filename, __dirname) { ');
         if (additionalVars && additionalVars.length) {
-            var additionalVarsString = 'var ' + additionalVars.join(', ') + ';';
+            var additionalVarsString = 'var ' + additionalVars.join(', ') + '; ';
 
-            var hasUseStrict = false;
+            var useStrictToken = null;
 
-            code = code.replace(useStrictRegExp, function(match, start, semicolon, newline) {
-                hasUseStrict = true;
-                if (semicolon) {
-                    out.push(start + semicolon + ' ' + additionalVarsString);
-                } else {
-                    out.push(start + '; ' + additionalVarsString + '\n');
+            tokenizer.forEachToken(code, function(token) {
+                if (token.name === 'useStrict') {
+                    useStrictToken = token;
                 }
-
-                return '';
             });
 
-            if (!hasUseStrict) {
-                out.push(additionalVarsString + ' ');
+            if (useStrictToken) {
+                code = code.substring(0, useStrictToken.end) + additionalVarsString + code.substring(useStrictToken.end);
+            } else {
+                code = additionalVarsString + code;
             }
         }
     }

@@ -131,7 +131,7 @@ describe('raptor-modules/transport.defineCode' , function() {
             ]
         });
 
-        expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { "use strict"; var foo="bar";\nexports.test=true;\n});');
+        expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { "use strict";var foo="bar"; \nexports.test=true;\n});');
     });
 
     it('should allow additional vars (\'use strict\';)', function() {
@@ -142,7 +142,7 @@ describe('raptor-modules/transport.defineCode' , function() {
             ]
         });
 
-        expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { \'use strict\'; var foo="bar";\nexports.test=true;\n});');
+        expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { \'use strict\';var foo="bar"; \nexports.test=true;\n});');
     });
 
     it('should allow additional vars ("use strict", no semicolon)', function() {
@@ -153,7 +153,18 @@ describe('raptor-modules/transport.defineCode' , function() {
             ]
         });
 
-        expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { "use strict"; var foo="bar";\nexports.test=true;\n});');
+        expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { "use strict" \nvar foo="bar"; exports.test=true;\n});');
+    });
+
+    it('should allow additional vars ("use strict", after multiline comment)', function() {
+        var transport = require('../');
+        var code = transport.defineCode.sync('/some/path', '/* hello world */\n/*more comments*/\n// Test comment\n   \n"use strict" \nexports.test=true;', {
+            additionalVars: [
+                'foo="bar"'
+            ]
+        });
+
+        expect(code).to.equal('$rmod.def("/some/path", function(require, exports, module, __filename, __dirname) { /* hello world */\n/*more comments*/\n// Test comment\n   \n"use strict" \nvar foo=\"bar\"; exports.test=true;\n});');
     });
 
 });
