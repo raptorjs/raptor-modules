@@ -65,23 +65,7 @@ BrowserOverrides.prototype = {
 
             while (current) {
                 target = current.overrides[requested];
-
-                if (target === false) {
-                    if (requested.startsWith('.')) {
-                        // A project module is remapped to an empty module
-                        var filePath = nodePath.join(current.dirname, requested);
-                        targetModuleInfo = {
-                            filePath: filePath,
-                            voidRemap: true
-                        };
-                    } else {
-                        targetModuleInfo = {
-                            name: requested,
-                            from: current.dirname,
-                            voidRemap: true
-                        };
-                    }
-                } else if (target) {
+                if (target) {
                     // there is a browser override at this level
                     if (target.startsWith('.')) {
                         var resolved = resolver.resolveRequire(target, current.dirname, options);
