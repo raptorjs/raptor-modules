@@ -24,7 +24,7 @@ function serverResolveRequire(target, from) {
             for (var ext in extensions) {
                 if (extensions.hasOwnProperty(ext)) {
                     var pathWithExt = path + ext;
-                    if (util.cachingFs.isDirectorySync(nodePath.dirname()) && util.cachingFs.existsSync(pathWithExt)) {
+                    if (util.cachingFs.existsSync(pathWithExt)) {
                         return pathWithExt;
                     }
                 }
