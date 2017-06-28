@@ -12,9 +12,7 @@ describe('raptor-modules/util.getPathInfo' , function() {
 
     beforeEach(function(done) {
         for (var k in require.cache) {
-            if (require.cache.hasOwnProperty(k)) {
-                delete require.cache[k];
-            }
+            delete require.cache[k];
         }
         done();
     });
@@ -162,4 +160,3 @@ describe('raptor-modules/util.getPathInfo' , function() {
 
 
 });
-

@@ -156,7 +156,7 @@ function resolveRequire(target, from, options) {
                 // Try with the extensions
                 var extensions = require.extensions;
                 for (var ext in extensions) {
-                    if (extensions.hasOwnProperty(ext) && ext !== '.node') {
+                    if (ext !== '.node') {
                         var pathWithExt = path + ext;
 
                         if (cachingFs.existsSync(pathWithExt)) {
