@@ -12,9 +12,7 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
 
     beforeEach(function(done) {
         for (var k in require.cache) {
-            if (require.cache.hasOwnProperty(k)) {
-                delete require.cache[k];
-            }
+            delete require.cache[k];
         }
         done();
     });
@@ -159,4 +157,3 @@ describe('raptor-modules/resolver.resolveRequire' , function() {
         expect(deresolvedPath).to.equal('bar/node_modules/baz');
     });
 });
-

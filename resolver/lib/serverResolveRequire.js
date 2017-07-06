@@ -22,11 +22,9 @@ function serverResolveRequire(target, from) {
             // Try with the extensions
             var extensions = require.extensions;
             for (var ext in extensions) {
-                if (extensions.hasOwnProperty(ext)) {
-                    var pathWithExt = path + ext;
-                    if (util.cachingFs.existsSync(pathWithExt)) {
-                        return pathWithExt;
-                    }
+                var pathWithExt = path + ext;
+                if (util.cachingFs.existsSync(pathWithExt)) {
+                    return pathWithExt;
                 }
             }
         }

@@ -11,9 +11,7 @@ describe('raptor-modules/transport.registerRemapCode' , function() {
 
     beforeEach(function(done) {
         for (var k in require.cache) {
-            if (require.cache.hasOwnProperty(k)) {
-                delete require.cache[k];
-            }
+            delete require.cache[k];
         }
         done();
     });
@@ -33,4 +31,3 @@ describe('raptor-modules/transport.registerRemapCode' , function() {
         out.resume();
     });
 });
-
